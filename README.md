@@ -99,13 +99,11 @@ We use an Application Load Balancer to round robin requests across multiple serv
 
 Get the ALB DNS name from cloudformation outputs stored in the file `cfn-output.json` and make sure the following calls work
 
-<pre>
-curl http://<ALB_DNS_NAME>
-
-curl http://<ALB_DNS_NAME>/api
-
-curl http://<ALB_DNS_NAME>/api/users | jq '.'
-<pre>
+    <pre>
+    curl http://<<ALB_DNS_NAME>>
+    curl http://<<ALB_DNS_NAME>>/api
+    curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
+    <pre>
 
 ## Lab 1 - Containerize the monolith
 
