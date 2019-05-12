@@ -98,9 +98,14 @@ We use an Application Load Balancer to round robin requests across multiple serv
 ![Reference diagram of the basic node application deployment](/images/monolithic-no-container.png)
 
 Get the ALB DNS name from cloudformation outputs stored in the file `cfn-output.json` and make sure the following calls work
+
+<pre>
 curl http://<ALB_DNS_NAME>
+
 curl http://<ALB_DNS_NAME>/api
+
 curl http://<ALB_DNS_NAME>/api/users | jq '.'
+<pre>
 
 ## Lab 1 - Containerize the monolith
 
