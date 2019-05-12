@@ -95,7 +95,7 @@ In this example `cluster` is used to spawn one worker process per core, and the 
 
 We use an Application Load Balancer to round robin requests across multiple servers, providing horizontal scaling.
 
-![Reference diagram of the basic node application deployment](../images/monolithic-no-container.png)
+![Reference diagram of the basic node application deployment](/images/monolithic-no-container.png)
 
 Get the ALB DNS name from cloudformation outputs stored in the file `cfn-output.json` and make sure the following calls work
 curl http://<ALB_DNS_NAME>
@@ -191,14 +191,9 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
 
 4. Now that you have a working Docker image, you can tag and push the image to [Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/).  ECR is a fully-managed Docker container registry that makes it easy to store, manage, and deploy Docker container images. In the next lab, we'll use ECS to pull your image from ECR.
 
+    Create an ECR repository using the aws cli
     
-    ![ECR repositories](images/01-ecr-repo.png)
-
-    Click on the repository name for the monolith, and note down the Repository URI (you will use this value again in the next lab):
-
-    ![ECR monolith repo](images/01-ecr-repo-uri.png)
-
-    *Note: Your repository URI will be unique.*
+    
 
     Tag and push your container image to the monolith repository.
 
