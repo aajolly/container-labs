@@ -195,8 +195,8 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
     
     <details>
     <summary>HINT: Create ECR Repository for monolith service </summary>
-    aws ecr create-repository \
-			--region us-east-1 \
+    aws ecr create-repository \  
+			--region us-east-1 \  
 			--repository-name api
     </details>
     
