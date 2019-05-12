@@ -103,7 +103,7 @@ Get the ALB DNS name from cloudformation outputs stored in the file `cfn-output.
     curl http://<<ALB_DNS_NAME>>
     curl http://<<ALB_DNS_NAME>>/api
     curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
-    <pre>
+    </pre>
 
 ## Lab 1 - Containerize the monolith
 
@@ -111,9 +111,6 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
 
 [Containers](https://aws.amazon.com/what-are-containers/) are a way to package software (e.g. web server, proxy, batch process worker) so that you can run your code and all of its dependencies in a resource isolated process. You might be thinking, "Wait, isn't that a virtual machine (VM)?" Containers virtualize the operating system, while VMs virtualize the hardware. Containers provide isolation, portability and repeatability, so your developers can easily spin up an environment and start building without the heavy lifting.  More importantly, containers ensure your code runs in the same way anywhere, so if it works on your laptop, it will also work in production.
 
-### Here's what you're going to work on in lab 1:
-
-![Lab 1 Architecture](images/01-arch.png)
 
 1. Review the Dockerfile
 
@@ -194,14 +191,27 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
 
 4. Now that you have a working Docker image, you can tag and push the image to [Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/).  ECR is a fully-managed Docker container registry that makes it easy to store, manage, and deploy Docker container images. In the next lab, we'll use ECS to pull your image from ECR.
 
-    Create an ECR repository using the aws cli
+    Create an ECR repository using the [aws ecr cli](https://docs.aws.amazon.com/cli/latest/reference/ecr/index.html#cli-aws-ecr). You can use the hint below
     
+    <details>
+    <summary>HINT: Create ECR Repository for monolith service </summary>
+    aws ecr create-repository \
+			--region us-east-1 \
+			--repository-name api
+    </details>
     
-
+    Take a note of the repositoryUri from the output    
+    
+    Retrieve the login command to use to authenticate your Docker client to your registry.
+    
+    <pre>
+    $(aws ecr get-login --no-include-email --region us-east-1)
+    </pre>
+    
     Tag and push your container image to the monolith repository.
 
     <pre>
-    $ docker tag monolith-service:latest <b><i>ECR_REPOSITORY_URI</i></b>:latest
+    $ docker tag api:latest <b><i>ECR_REPOSITORY_URI</i></b>:latest
     $ docker push <b><i>ECR_REPOSITORY_URI</i></b>:latest
     </pre>
 
@@ -210,31 +220,35 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
     Here's sample output from these commands:
 
     <pre>
-    $ docker tag monolith-service:latest 873896820536.dkr.ecr.us-east-2.amazonaws.com/mysfit-mono-oa55rnsdnaud:latest
-    $ docker push 873896820536.dkr.ecr.us-east-2.amazonaws.com/mysfit-mono-oa55rnsdnaud:latest
-    The push refers to a repository [873896820536.dkr.ecr.us-east-2.amazonaws.com/mysfit-mono-oa55rnsdnaud:latest]
-    0f03d692d842: Pushed
-    ddca409d6822: Pushed
-    d779004749f3: Pushed
-    4008f6d92478: Pushed
-    e0c4f058a955: Pushed
-    7e33b38be0e9: Pushed
-    b9c7536f9dd8: Pushed
-    43a02097083b: Pushed
-    59e73cf39f38: Pushed
-    31df331e1f23: Pushed
-    630730f8c75d: Pushed
-    827cd1db9e95: Pushed
-    e6e107f1da2f: Pushed
-    c41b9462ea4b: Pushed
-    latest: digest: sha256:a27cb7c6ad7a62fccc3d56dfe037581d314bd8bd0d73a9a8106d979ac54b76ca size: 3252
+    $ docker tag api:latest 012345678912.dkr.ecr.us-east-1.amazonaws.com/api:latest
+    $ docker push 012345678912.dkr.ecr.us-east-1.amazonaws.com/api:latest
+    The push refers to a repository [012345678912.dkr.ecr.us-east-1.amazonaws.com/api:latest]
+    0169d27ce6ae: Pushed 
+    d06bcc55d2f3: Pushed 
+    732a53541a3b: Pushed 
+    721384ec99e5: Pushed 
+    latest: digest: sha256:2d27533d5292b7fdf7d0e8d41d5aadbcec3cb6749b5def8b8ea6be716a7c8e17 size: 1158
     </pre>
 
-    *Note: Typically, you'd have to log into your ECR repo. However, you did not need to authenticate docker with ECR because the [Amazon ECR Credential Helper](https://github.com/awslabs/amazon-ecr-credential-helper) has been installed and configured for you on the Cloud9 Environment.  This was done earlier when you ran the setup script. You can read more about the credentials helper in this [article](https://aws.amazon.com/blogs/compute/authenticating-amazon-ecr-repositories-for-docker-cli-with-credential-helper/).*
+    View the latest image pushed and tagged in the ECR repository
 
-    If you refresh the ECR repository page in the console, you'll see a new image uploaded and tagged as latest.
-
-    ![ECR push complete](images/01-ecr-push-complete.png)
+    <pre>
+    aws ecr describe-images --repository-name api                           
+    {
+    "imageDetails": [
+        {
+            "imageSizeInBytes": 22702204, 
+            "imageDigest": "sha256:2d27533d5292b7fdf7d0e8d41d5aadbcec3cb6749b5def8b8ea6be716a7c8e17", 
+            "imageTags": [
+                "latest"
+            ], 
+            "registryId": "012345678912", 
+            "repositoryName": "api", 
+            "imagePushedAt": 1557648496.0
+            }
+        ]
+    }
+    </pre>
 
 ### Checkpoint:
 At this point, you should have a working container for the monolith codebase stored in an ECR repository and ready to deploy with ECS in the next lab.
