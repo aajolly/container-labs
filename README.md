@@ -13,46 +13,26 @@ In this lab, you'll deploy a basic nodejs monolithic application using Auto Scal
 
 ### What you'll do:
 
-* **Workshop Setup:** [Setup working environment on AWS](#lets-begin)
+* **Lab Setup:** [Setup working environment on AWS](#lets-begin)
 * **Lab 1:** [Containerize the monolith](#lab-1---containerize-the-monolith)
 * **Lab 2:** [Deploy the container using AWS Fargate](#lab-2---deploy-your-container-using-ecrecs)
-* **Lab 3:** [Scale the adoption platform monolith with an ALB and an ECS Service](#lab-3---scale-the-adoption-platform-monolith-with-an-alb)
-* **Lab 4:** [Incrementally build and deploy more microservices with AWS Fargate](#lab-4-incrementally-build-and-deploy-each-microservice-using-fargate)
-* **Cleanup** [Put everything away nicely](#workshop-cleanup)
-
-### Conventions:
-
-Throughout this workshop, we will provide commands for you to run in the terminal.  These commands will look like this:
-
-<pre>
-$ ssh -i <b><i>PRIVATE_KEY.PEM</i></b> ec2-user@<b><i>EC2_PUBLIC_DNS_NAME</i></b>
-</pre>
-
-The command starts after the `$`.  Text that is ***UPPER_ITALIC_BOLD*** indicates a value that is unique to your environment.  For example, ***PRIVATE\_KEY.PEM*** refers to the private key of an SSH key pair that you've created in your account, and ***EC2\_PUBLIC\_DNS\_NAME*** is a value that is specific to an EC2 instance launched in your account.  You can find these unique values either in the CloudFormation outputs or by navigating to the specific service dashboard in the [AWS management console](https://console.aws.amazon.com).
-
-Hints are also provided along the way and will look like this:
-
-<details>
-<summary>HINT</summary>
-
-**Nice work, you just revealed a hint!**
-</details>
+* **Lab 3:** [Break the monolith into microservices](#lab-3---break-the-monolith)
+* **Lab 4:** [CodeDeploy Blue/Green deployments](#lab-4-codedeploy-blue-green-deployments)
+* **Cleanup** [Put everything away nicely](#lab-cleanup)
 
 
-*Click on the arrow to show the contents of the hint.*
+### IMPORTANT: Lab Cleanup
 
-### IMPORTANT: Workshop Cleanup
-
-You will be deploying infrastructure on AWS which will have an associated cost. If you're attending an AWS event, credits will be provided.  When you're done with the workshop, [follow the steps at the very end of the instructions](#workshop-cleanup) to make sure everything is cleaned up and avoid unnecessary charges.
+You will be deploying infrastructure on AWS which will have an associated cost. When you're done with the lab, [follow the steps at the very end of the instructions](#lab-cleanup) to make sure everything is cleaned up and avoid unnecessary charges.
 
 
 ## Let's Begin!
 
-### Workshop Setup:
+### Lab Setup:
 
 1. Open the CloudFormation launch template link below in a new tab. The link will load the CloudFormation Dashboard and start the stack creation process in the chosen region:
    
-    Click on one of the **Deploy to AWS** icons below to region to stand up the core workshop infrastructure.
+    Click on one of the **Deploy to AWS** icons below to region to stand up the core lab infrastructure.
 
 | Region | Launch Template |
 | ------------ | ------------- | 
@@ -87,7 +67,7 @@ You will be deploying infrastructure on AWS which will have an associated cost. 
 
     After cloning the repository, you'll see that your project explorer now includes the files cloned.
 
-    In the terminal, change directory to the subdirectory for this workshop in the repo:
+    In the terminal, change directory to the subdirectory for this lab in the repo:
 
     ```
     $ cd container-immersion-day-15-05-2019/lab-1
@@ -102,17 +82,29 @@ You will be deploying infrastructure on AWS which will have an associated cost. 
     This script will delete some unneeded Docker images to free up disk space, update aws-cli version and update some packages.  Make sure you see the "Success!" message when the script completes.
 
 
-### Checkpoint:
-At this point, the Mythical Mysfits website should be available at the static site endpoint for the S3 bucket created by CloudFormation. You can visit the site at <code>http://<b><i>BUCKET_NAME</i></b>.s3-website.<b><i>REGION</i></b>.amazonaws.com/</code>. You can find the ***BUCKET_NAME*** in the CloudFormation outputs saved in the file `workshop-1/cfn-outputs.json`. Check that you can view the site, but there won't be much content visible yet until we launch the Mythical Mysfits monolith service:
+## About the monolith
+### Basic Node.js Server
 
-![initial website](images/00-website.png)
+This is an example of a basic monolithic node.js service that has been designed to run directly on a server, without a container.
 
-[*^ back to top*](#monolith-to-microservices-with-docker-and-aws-fargate)
+### Architecture
 
+Since Node.js programs run a single threaded event loop it is necessary to use the node `cluster` functionality in order to get maximum usage out of a multi-core server.
 
-## Lab 1 - Containerize the Mythical Mysfits adoption agency platform
+In this example `cluster` is used to spawn one worker process per core, and the processes share a single port using round robin load balancing built into Node.js
 
-The Mythical Mysfits adoption agency infrastructure has always been running directly on EC2 VMs. Our first step will be to modernize how our code is packaged by containerizing the current Mythical Mysfits adoption platform, which we'll also refer to as the monolith application.  To do this, you will create a [Dockerfile](https://docs.docker.com/engine/reference/builder/), which is essentially a recipe for [Docker](https://aws.amazon.com/docker) to build a container image.  You'll use your [AWS Cloud9](https://aws.amazon.com/cloud9/) development environment to author the Dockerfile, build the container image, and run it to confirm it's able to process adoptions.
+We use an Application Load Balancer to round robin requests across multiple servers, providing horizontal scaling.
+
+![Reference diagram of the basic node application deployment](../images/monolithic-no-container.png)
+
+Get the ALB DNS name from cloudformation outputs stored in the file `cfn-output.json` and make sure the following calls work
+curl http://<ALB_DNS_NAME>
+curl http://<ALB_DNS_NAME>/api
+curl http://<ALB_DNS_NAME>/api/users | jq '.'
+
+## Lab 1 - Containerize the monolith
+
+The current infrastructure has always been running directly on EC2 VMs. Our first step will be to modernize how our code is packaged by containerizing the current Mythical Mysfits adoption platform, which we'll also refer to as the monolith application.  To do this, you will create a [Dockerfile](https://docs.docker.com/engine/reference/builder/), which is essentially a recipe for [Docker](https://aws.amazon.com/docker) to build a container image.  You'll use your [AWS Cloud9](https://aws.amazon.com/cloud9/) development environment to author the Dockerfile, build the container image, and run it to confirm it's able to process adoptions.
 
 [Containers](https://aws.amazon.com/what-are-containers/) are a way to package software (e.g. web server, proxy, batch process worker) so that you can run your code and all of its dependencies in a resource isolated process. You might be thinking, "Wait, isn't that a virtual machine (VM)?" Containers virtualize the operating system, while VMs virtualize the hardware. Containers provide isolation, portability and repeatability, so your developers can easily spin up an environment and start building without the heavy lifting.  More importantly, containers ensure your code runs in the same way anywhere, so if it works on your laptop, it will also work in production.
 
@@ -120,237 +112,62 @@ The Mythical Mysfits adoption agency infrastructure has always been running dire
 
 ![Lab 1 Architecture](images/01-arch.png)
 
-1. Review the draft Dockerfile and add the missing instructions indicated by comments in the file:
-
-    *Note: If you're already familiar with how Dockerfiles work and want to focus on breaking the monolith apart into microservices, skip down to ["HINT: Final Dockerfile"](#final-dockerfile) near the end of step 5, create a Dockerfile in the monolith directory with the hint contents, build the "monolith" image, and continue to step 6.  Otherwise continue on...*
-
-    One of the Mythical Mysfits' developers started working on a Dockerfile in her free time, but she was pulled to a high priority project before she finished.
-
-    In the Cloud9 file tree, navigate to `workshop-1/app/monolith-service`, and double-click on **Dockerfile.draft** to open the file for editing.
-
-    *Note: If you would prefer to use the bash shell and a text editor like vi or emacs instead, you're welcome to do so.*
-
-    Review the contents, and you'll see a few comments at the end of the file noting what still needs to be done.  Comments are denoted by a "#".
-
-    Docker builds container images by stepping through the instructions listed in the Dockerfile.  Docker is built on this idea of layers starting with a base and executing each instruction that introduces change as a new layer.  It caches each layer, so as you develop and rebuild the image, Docker will reuse layers (often referred to as intermediate layers) from cache if no modifications were made.  Once it reaches the layer where edits are introduced, it will build a new intermediate layer and associate it with this particular build.  This makes tasks like image rebuild very efficient, and you can easily maintain multiple build versions.
-
-    ![Docker Container Image](images/01-container-image.png)
-
-    For example, in the draft file, the first line - `FROM ubuntu:latest` - specifies a base image as a starting point.  The next instruction - `RUN apt-get -y update` - creates a new layer where Docker updates package lists from the Ubuntu repositories.  This continues until you reach the last instruction which in most cases is an `ENTRYPOINT` *(hint hint)* or executable being run.
-
-    Add the remaining instructions to Dockerfile.draft.
-
-    <details>
-    <summary>HINT: Helpful links for completing Dockefile.draft</summary>
-    <pre>
-    Here are links to external documentation to give you some ideas:
-
-    #[TODO]: Copy the "service" directory into container image
-
-    - Consider the [COPY](https://docs.docker.com/engine/reference/builder/#copy) command
-    - You're copying both the python source files and requirements.txt from the "monolith-service/service" directory on your EC2 instance into the working directory of the container, which can be specified as "."
-
-    #[TODO]: Install dependencies listed in the requirements.txt file using pip
-
-    - Consider the [RUN](https://docs.docker.com/engine/reference/builder/#run) command
-    - More on [pip and requirements files](https://pip.pypa.io/en/stable/user_guide/#requirements-files)
-    - We're using pip and python binaries from virtualenv, so use "bin/pip" for your command
-
-    #[TODO]: Specify a listening port for the container
-
-    - Consider the [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) command
-    - App listening portNum can be found in the app source - mythicalMysfitsService.py
-
-    #[TODO]: Run "mythicalMysfitsService.py" as the final step. We want this container to run as an executable. Looking at ENTRYPOINT for this?
-
-    - Consider the [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) command
-    - Our ops team typically runs 'python mythicalMysfitsService.py' to launch the application on our servers.
-    </pre>
-    </details>
-
-    Once you're happy with your additions OR if you get stuck, you can check your work by comparing your work with the hint below.
-
-    <details>
-    <summary>HINT: Completed Dockerfile</summary>
-    <pre>
-    FROM ubuntu:latest
-    RUN apt-get update -y
-    RUN apt-get install -y python-pip python-dev build-essential
-    RUN pip install --upgrade pip
-    COPY ./service /MythicalMysfitsService
-    WORKDIR /MythicalMysfitsService
-    RUN pip install -r ./requirements.txt
-    EXPOSE 80
-    ENTRYPOINT ["python"]
-    CMD ["mythicalMysfitsService.py"]
-    </pre>
-    </details>
-
-    If your Dockerfile looks good, rename your file from "Dockerfile.draft" to "Dockerfile" and continue to the next step.
-
-    <pre>
-    $ mv Dockerfile.draft Dockerfile
-    </pre>
+1. Review the Dockerfile
 
 2. Build the image using the [Docker build](https://docs.docker.com/engine/reference/commandline/build/) command.
 
     This command needs to be run in the same directory where your Dockerfile is. **Note the trailing period** which tells the build command to look in the current directory for the Dockerfile.
 
     <pre>
-    $ docker build -t monolith-service .
+    $ docker build -t api .
     </pre>
 
-    You'll see a bunch of output as Docker builds all layers of the image.  If there is a problem along the way, the build process will fail and stop (red text and warnings along the way are fine as long as the build process does not fail).  Otherwise, you'll see a success message at the end of the build output like this:
-
-    <pre>
-    Step 9/10 : ENTRYPOINT ["python"]
-     ---> Running in 7abf5edefb36
-    Removing intermediate container 7abf5edefb36
-     ---> 653ccee71620
-    Step 10/10 : CMD ["mythicalMysfitsService.py"]
-     ---> Running in 291edf3d5a6f
-    Removing intermediate container 291edf3d5a6f
-     ---> a8d2aabc6a7b
-    Successfully built a8d2aabc6a7b
-    Successfully tagged monolith-service:latest
-    </pre>
-
-    *Note: Your output will not be exactly like this, but it will be similar.*
-
-    Awesome, your Dockerfile built successfully, but our developer didn't optimize the Dockefile for the microservices effort later.  Since you'll be breaking apart the monolith codebase into microservices, you will be editing the source code (e.g. `mythicalMysfitsService.py`) often and rebuilding this image a few times.  Looking at your existing Dockerfile, what is one thing you can do to improve build times?
-
-    <details>
-    <summary>HINT</summary>
-    Remember that Docker tries to be efficient by caching layers that have not changed.  Once change is introduced, Docker will rebuild that layer and all layers after it.
-
-    Edit mythicalMysfitsService.py by adding an arbitrary comment somewhere in the file.  If you're not familiar with Python, [comments](https://docs.python.org/2/tutorial/introduction.html) start with the hash character, '#' and are essentially ignored when the code is interpreted.
-
-    For example, here a comment (`# Author: Mr Bean`) was added before importing the time module:
-    <pre>
-    # Author: Mr Bean
-
-    import time
-    from flask import Flask
-    from flask import request
-    import json
-    import requests
-    ....
-    </pre>
-
-    Rebuild the image using the 'docker build' command from above and notice Docker references layers from cache, and starts rebuilding layers starting from Step 5, when mythicalMysfitsService.py is copied over since that is where change is first introduced:
-
-    <pre>
-    Step 5/10 : COPY ./service /MythicalMysfitsService
-     ---> 9ec17281c6f9
-    Step 6/10 : WORKDIR /MythicalMysfitsService
-     ---> Running in 585701ed4a39
-    Removing intermediate container 585701ed4a39
-     ---> f24fe4e69d88
-    Step 7/10 : RUN pip install -r ./requirements.txt
-     ---> Running in 1c878073d631
-    Collecting Flask==0.12.2 (from -r ./requirements.txt (line 1))
-    </pre>
-
-    Try reordering the instructions in your Dockerfile to copy the monolith code over after the requirements are installed.  The thinking here is that the Python source will see more changes than the dependencies noted in requirements.txt, so why rebuild requirements every time when we can just have it be another cached layer.
-    </details>
-
-    Edit your Dockerfile with what you think will improve build times and compare it with the Final Dockerfile hint below.
-
-
-    #### Final Dockerfile
-    <details>
-    <summary>HINT: Final Dockerfile</summary>
-    <pre>
-    FROM ubuntu:latest
-    RUN apt-get update -y
-    RUN apt-get install -y python-pip python-dev build-essential
-    RUN pip install --upgrade pip
-    COPY service/requirements.txt .
-    RUN pip install -r ./requirements.txt
-    COPY ./service /MythicalMysfitsService
-    WORKDIR /MythicalMysfitsService
-    EXPOSE 80
-    ENTRYPOINT ["python"]
-    CMD ["mythicalMysfitsService.py"]
-    </pre>
-    </details>
-
-    To see the benefit of your optimizations, you'll need to first rebuild the monolith image using your new Dockerfile (use the same build command at the beginning of step 5).  Then, introduce a change in `mythicalMysfitsService.py` (e.g. add another arbitrary comment) and rebuild the monolith image again.  Docker cached the requirements during the first rebuild after the re-ordering and references cache during this second rebuild.  You should see something similar to below:
-
-    <pre>
-    Step 6/11 : RUN pip install -r ./requirements.txt
-     ---> Using cache
-     ---> 612509a7a675
-    Step 7/11 : COPY ./service /MythicalMysfitsService
-     ---> c44c0cf7e04f
-    Step 8/11 : WORKDIR /MythicalMysfitsService
-     ---> Running in 8f634cb16820
-    Removing intermediate container 8f634cb16820
-     ---> 31541db77ed1
-    Step 9/11 : EXPOSE 80
-     ---> Running in 02a15348cd83
-    Removing intermediate container 02a15348cd83
-     ---> 6fd52da27f84
-    </pre>
-
-    You now have a Docker image built.  The -t flag names the resulting container image.  List your docker images and you'll see the "monolith-service" image in the list. Here's a sample output, note the monolith image in the list:
+    You now have a Docker image built. The -t flag names the resulting container image. List your docker images and you'll see the "api" image in the list. Here's a sample output, note the api image in the list:
 
     <pre>
     $ docker images
-    REPOSITORY                                                              TAG                 IMAGE ID            CREATED              SIZE
-    monolith-service                                                        latest              29f339b7d63f        About a minute ago   506MB
-    ubuntu                                                                  latest              ea4c82dcd15a        4 weeks ago          85.8MB
-    golang                                                                  1.9                 ef89ef5c42a9        4 months ago         750MB
+    REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+    api                 latest              6a7abc1cc4c3        7 minutes ago       67.6MB
+    mhart/alpine-node   8                   135ddefd2040        3 weeks ago         66MB
     </pre>
 
     *Note: Your output will not be exactly like this, but it will be similar.*
 
-    Notice the image is also tagged as "latest".  This is the default behavior if you do not specify a tag of your own, but you can use this as a freeform way to identify an image, e.g. monolith-service:1.2 or monolith-service:experimental.  This is very convenient for identifying your images and correlating an image with a branch/version of code as well.
+    Notice the image is also tagged as "latest".  This is the default behavior if you do not specify a tag of your own, but you can use this as a freeform way to identify an image, e.g. api:1.2 or api:experimental.  This is very convenient for identifying your images and correlating an image with a branch/version of code as well.
 
-3. Run the docker container and test the adoption agency platform running as a container:
+3. Run the docker container and test the application running as a container:
 
     Use the [docker run](https://docs.docker.com/engine/reference/run/) command to run your image; the -p flag is used to map the host listening port to the container listening port.
 
     <pre>
-    $ docker run -p 8000:80 -e AWS_DEFAULT_REGION=<b><i>REGION</i></b> -e DDB_TABLE_NAME=<b><i>TABLE_NAME</i></b> monolith-service
+    $ docker run --name monolith-container -p 3000:3000 api
     </pre>
 
-    *Note: You can find your DynamoDB table name in the file `workshop-1/cfn-output.json` derived from the outputs of the CloudFormation stack.*
 
-    Here's sample output as the application starts:
-
-    ```
-    * Running on http://0.0.0.0:80/ (Press CTRL+C to quit)
-    ```
-
-    *Note: Your output will not be exactly like this, but it will be similar.*
-
-    To test the basic functionality of the monolith service, query the service using a utility like [cURL](https://curl.haxx.se/), which is bundled with Cloud9.
+    To test the basic functionality of the monolith service, query the service using a utility like [cURL](https://localhost:3000/api/threads), which is bundled with Cloud9.
 
     Click on the plus sign next to your tabs and choose **New Terminal** or click **Window** -> **New Terminal** from the Cloud9 menu to open a new shell session to run the following curl command.
 
     <pre>
-    $ curl http://localhost:8000/mysfits
+    $ curl http://localhost:3000/api/users
     </pre>
 
-    You should see a JSON array with data about a number of Mythical Mysfits.
-
-    *Note: Processes running inside of the Docker container are able to authenticate with DynamoDB because they can access the EC2 metadata API endpoint running at `169.254.169.254` to retrieve credentials for the instance profile that was attached to our Cloud9 environment in the initial setup script. Processes in containers cannot access the `~/.aws/credentials` file in the host filesystem (unless it is explicitly mounted into the container).*
+    You should see a JSON array with data about threads.
 
     Switch back to the original shell tab where you're running the monolith container to check the output from the monolith.
 
-    The monolith container runs in the foreground with stdout/stderr printing to the screen, so when the request is received, you should see a `200`. "OK".
+    The monolith container runs in the foreground with stdout/stderr printing to the screen, so when the request is received, you should see a `GET`.
 
     Here is sample output:
 
     <pre>
-    INFO:werkzeug:172.17.0.1 - - [16/Nov/2018 22:24:18] "GET /mysfits HTTP/1.1" 200 -
+    GET /api/users - 3
     </pre>
 
     In the tab you have the running container, type **Ctrl-C** to stop the running container.  Notice, the container ran in the foreground with stdout/stderr printing to the console.  In a production environment, you would run your containers in the background and configure some logging destination.  We'll worry about logging later, but you can try running the container in the background using the -d flag.
 
     <pre>
-    $ docker run -d -p 8000:80 -e AWS_DEFAULT_REGION=<b><i>REGION</i></b> -e DDB_TABLE_NAME=<b><i>TABLE_NAME</i></b> monolith-service
+    $ docker run --name monolith-container -d -p 3000:3000 api
     </pre>
 
     List running docker containers with the [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) command to make sure the monolith is running.
@@ -359,34 +176,22 @@ The Mythical Mysfits adoption agency infrastructure has always been running dire
     $ docker ps
     </pre>
 
-    You should see monolith running in the list. Now repeat the same curl command as before, ensuring you see the same list of Mysfits. You can check the logs again by running [docker logs](https://docs.docker.com/engine/reference/commandline/ps/) (it takes a container name or id fragment as an argument).
-
     <pre>
-    $ docker logs <b><i>CONTAINER_ID</i></b>
+    $ docker logs <b><i>CONTAINER_ID or CONTAINER_NAME</i></b>
     </pre>
 
-    Here's sample output from the above commands:
+    Here's sample output from the above command:
 
     <pre>
-    $ docker run -d -p 8000:80 -e AWS_DEFAULT_REGION=<b><i>REGION</i></b> -e DDB_TABLE_NAME=<b><i>TABLE_NAME</i></b> monolith-service
-    51aba5103ab9df25c08c18e9cecf540592dcc67d3393ad192ebeda6e872f8e7a
-    $ docker ps
-    CONTAINER ID        IMAGE                           COMMAND                  CREATED             STATUS              PORTS                  NAMES
-    51aba5103ab9        monolith-service:latest         "python mythicalMysf…"   24 seconds ago      Up 23 seconds       0.0.0.0:8000->80/tcp   awesome_varahamihira
-    $ curl localhost:8000/mysfits
-    {"mysfits": [...]}
-    $ docker logs 51a
-     * Running on http://0.0.0.0:80/ (Press CTRL+C to quit)
-    172.17.0.1 - - [16/Nov/2018 22:56:03] "GET /mysfits HTTP/1.1" 200 -
-    INFO:werkzeug:172.17.0.1 - - [16/Nov/2018 22:56:03] "GET /mysfits HTTP/1.1" 200 -
+    $ docker logs monolith-container
+    Worker started
+    Worker started
+    GET /api/users - 3
     </pre>
 
-    In the sample output above, the container was assigned the name "awesome_varahamihira".  Names are arbitrarily assigned.  You can also pass the docker run command a name option if you want to specify the running name.  You can read more about it in the [Docker run reference](https://docs.docker.com/engine/reference/run/).  Kill the container using `docker kill` now that we know it's working properly.
+4. Now that you have a working Docker image, you can tag and push the image to [Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/).  ECR is a fully-managed Docker container registry that makes it easy to store, manage, and deploy Docker container images. In the next lab, we'll use ECS to pull your image from ECR.
 
-4. Now that you have a working Docker image, tag and push the image to [Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/).  ECR is a fully-managed Docker container registry that makes it easy to store, manage, and deploy Docker container images. In the next lab, we'll use ECS to pull your image from ECR.
-
-    In the AWS Management Console, navigate to [Repositories](https://console.aws.amazon.com/ecs/home#/repositories) in the ECS dashboard.  You should see repositories for the monolith service and like service.  These were created by CloudFormation and named like <code><b><i>STACK_NAME</i></b>-mono-xxx</code> and <code><b><i>STACK_NAME</i></b>-like-xxx</code> where ***STACK_NAME*** is the name of the CloudFormation stack (the stack name may be truncated).
-
+    
     ![ECR repositories](images/01-ecr-repo.png)
 
     Click on the repository name for the monolith, and note down the Repository URI (you will use this value again in the next lab):
