@@ -1,0 +1,20 @@
+#! /bin/bash
+
+set -eu
+
+echo "Updating all packages"
+sudo yum update -y
+
+echo "Removing unneeded docker images..."
+docker images -q | xargs docker rmi || true
+
+echo "Downloading pip3"
+curl -O https://bootstrap.pypa.io/get-pip.py
+
+echo "Installing pip3"
+python3 get-pip.py --user
+
+echo "Upgrading AWS CLI"
+pip3 install awscli --upgrade --user
+
+echo "Success!"
