@@ -148,7 +148,7 @@ Once we have verified this new microservice works we can remove the old code pat
    --listener-arn arn:aws:elasticloadbalancing:us-east-1:776055576349:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
    --priority 1 \
    --conditions Field=path-pattern,Values='/api/<b>SERVICE_NAME</b>*' \
-   --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912<b/>:targetgroup/<b>SERVICE_NAME</b>-tg/73e2d6bc24d8a067
+   --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/<b>SERVICE_NAME</b>-tg/73e2d6bc24d8a067
    </pre>
 
 10. Create a new service using the json input file for each service. File name - ecs-service-**SERVICE_NAME**.json
