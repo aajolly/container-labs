@@ -20,14 +20,6 @@ router.get('/api/posts/by-user/:userId', function *() {
   this.body = db.posts.filter((post) => post.user == id);
 });
 
-router.get('/api/', function *() {
-  this.body = "Microservices API ready to receive requests for posts";
-});
-
-router.get('/', function *() {
-  this.body = "Microservices Ready to receive requests";
-});
-
 app.use(router.routes());
 app.use(router.allowedMethods());
 

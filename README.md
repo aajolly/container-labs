@@ -500,16 +500,20 @@ Now lets modify the listener to point the load balancer to this new target group
         </pre>
 
 **Note: Replace all placeholders for targetGroupArn, subnets & securityGroups with your account specific values for those parameters. You should be able to find these using the cfn-outputs.json file. The subnets used here are the private subnets.**
+    Create service using the command below
+    <pre>
+    aws ecs create-service --cli-input-json file://ecs-service.json
+    </pre>
     
     Run the same curl command as before (or view the load balancer endpoint in your browser) and ensure that you get a response which says it runs on a container.
-        <details>
-        <summary>HINT: CURL Commands</summary>
-        <pre>
-        curl http://<<ALB_DNS_NAME>>
-        curl http://<<ALB_DNS_NAME>>/api
-        curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
-        </pre>
-        </details>
+    <details>
+    <summary>HINT: CURL Commands</summary>
+    <pre>
+    curl http://<<ALB_DNS_NAME>>
+    curl http://<<ALB_DNS_NAME>>/api
+    curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
+    </pre>
+    </details>
 
 ### Checkpoint:
 Nice work!  You've created a task definition and are able to deploy the monolith container using ECS.  You've also enabled logging to CloudWatch Logs, so you can verify your container works as expected.

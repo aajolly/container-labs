@@ -101,13 +101,13 @@ Once we have verified this new microservice works we can remove the old code pat
 5. Create CloudWatch log groups for each service
 
    <pre>
-   aws logs create-log-group --log-group-name "/ecs/<b>SERVICE_NAME</b>"
+   aws logs create-log-group --log-group-name "/ecs/<b>SERVICE_NAME</b>" --region us-east-1
    </pre>
 
 6. Register task definitions for each service
 
    <pre>
-   aws ecs register-task-definition --cli-input-json file://fargate-task-def-**SERVICE_NAME**.json
+   aws ecs register-task-definition --cli-input-json file://fargate-task-def-<b>SERVICE_NAME</b>.json
    </pre>
    
 7. Create new Target Groups for each service
@@ -119,6 +119,7 @@ Once we have verified this new microservice works we can remove the old code pat
 	--vpc-id <b>VPCId</b> \
 	--port 3000 \
 	--protocol HTTP \
+	--target-type ip \
 	--health-check-protocol HTTP \
 	--health-check-path / \
 	--health-check-interval-seconds 6 \
@@ -144,6 +145,8 @@ Once we have verified this new microservice works we can remove the old code pat
    <pre>
    aws elbv2 create-rule \
    --region us-east-1 \
+   --listener-arn arn:aws:elasticloadbalancing:us-east-1:776055576349:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+   --priority 1 \
    --conditions Field=path-pattern,Values='/api/<b>SERVICE_NAME</b>*' \
    --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912<b/>:targetgroup/<b>SERVICE_NAME</b>-tg/73e2d6bc24d8a067
    </pre>
@@ -182,5 +185,11 @@ Once we have verified this new microservice works we can remove the old code pat
    }
    </pre>
 
-11. Drain the existing service by changing the desired count to 0.
-12. Test the load balancer endpoint, the users, posts & threads should be different.
+11. Create the service
+
+   <pre>
+   aws ecs create-service --cli-input-json file://ecs-service-<b>SERVICE_NAME</b>.json
+   </pre>
+
+12. Drain the existing service by changing the desired count to 0.
+13. Test the load balancer endpoint, the users, posts & threads should be different.
