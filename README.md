@@ -419,96 +419,97 @@ List task definitions using the below command
 
 4. Create a new Target Group
 
-    <pre>
-    aws elbv2 create-target-group \
-    --region us-east-1 \
-    --name monolith-cntr-tg \
-    --vpc-id **vpc-010b11d3ad023b4ed** \
-    --port 80 \
-    --protocol HTTP \
-    --target-type ip \
-    --health-check-protocol HTTP \
-    --health-check-path / \
-    --health-check-interval-seconds 6 \
-    --health-check-timeout-seconds 5 \
-    --healthy-threshold-count 2 \
-    --unhealthy-threshold-count 2 \
-    --query "TargetGroups[0].TargetGroupArn" \
-    --output text
-    </pre>
+        <pre>
+        aws elbv2 create-target-group \
+        --region us-east-1 \
+        --name monolith-cntr-tg \
+        --vpc-id <b>vpc-010b11d3ad023b4ed</b> \
+        --port 80 \
+        --protocol HTTP \
+        --target-type ip \
+        --health-check-protocol HTTP \
+        --health-check-path / \
+        --health-check-interval-seconds 6 \
+        --health-check-timeout-seconds 5 \
+        --healthy-threshold-count 2 \
+        --unhealthy-threshold-count 2 \
+        --query "TargetGroups[0].TargetGroupArn" \
+        --output text
+        </pre>
 
 **Note: Replace the vpc-id with your specific id. You should be able to get the VPCId for your specific account from the cfn-output.json file. The output of the above command will provide the TargetGroup ARN, make a note of it.**
+
 Now lets modify the listener to point the load balancer to this new target group
     
-    <pre>
-    Get the listener-arn 
+        <pre>
+        Get the listener-arn 
+        
+        aws elbv2 describe-listeners \
+        --region us-east-1 \
+        --query "Listeners[0].ListenerArn" \
+        --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+        --output text
+        
+        Modify the listener
+            
+        aws elbv2 modify-listener \
+        --region us-east-1 \
+        --listener-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+        --query "Listeners[0].ListenerArn" \
+        --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/monolith-cntr-tg/566b90ffcc10985e \
+        --output text
+        </pre>
     
-    aws elbv2 describe-listeners \
-    --region us-east-1 \
-    --query "Listeners[0].ListenerArn" \
-    --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:**012345678912**:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
-    --output text
-    
-    Modify the listener
-    
-    aws elbv2 modify-listener \
-    --region us-east-1 \
-    --listener-arn arn:aws:elasticloadbalancing:us-east-1:**012345678912**:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
-    --query "Listeners[0].ListenerArn" \
-    --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:**012345678912**:targetgroup/monolith-cntr-tg/566b90ffcc10985e \
-    --output text
-    </pre>
-    
-*Note: Replace the placeholder arn's with your own arns. Make a note of the listener arn.
+    **Note: Replace the placeholder arn's with your own arns. Make a note of the listener arn.**
 
 5. Create a new service now
 
-Amazon ECS allows you to run and maintain a specified number of instances of a task definition simultaneously in an Amazon ECS cluster. This is called a service. If any of your tasks should fail or stop for any reason, the Amazon ECS service scheduler launches another instance of your task definition to replace it and maintain the desired count of tasks in the service depending on the scheduling strategy used.
-Create a file named ecs-service.json with the following parameters
+    Amazon ECS allows you to run and maintain a specified number of instances of a task definition simultaneously in an Amazon ECS cluster. This is called a service. If any of your tasks should fail or stop for any reason, the Amazon ECS service scheduler launches another instance of your task definition to replace it and maintain the desired count of tasks in the service depending on the scheduling strategy used.
+    Create a file named ecs-service.json with the following parameters
     
-    <pre>
-    {
-        "cluster": "my_first_ecs_cluster", 
-        "serviceName": "monolith-service", 
-        "taskDefinition": "monolith-task-def:1", 
-        "loadBalancers": [
-            {
-                "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:**012345678912**:targetgroup/monolith-cntr-tg/566b90ffcc10985e", 
-                "containerName": "monolith-cntr", 
-                "containerPort": 3000
+        <pre>
+        {
+            "cluster": "my_first_ecs_cluster", 
+            "serviceName": "monolith-service", 
+            "taskDefinition": "monolith-task-def:1", 
+            "loadBalancers": [
+                {
+                    "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:**012345678912**:targetgroup/monolith-cntr-tg/566b90ffcc10985e", 
+                    "containerName": "monolith-cntr", 
+                    "containerPort": 3000
+                }
+            ], 
+            "desiredCount": 2, 
+            "clientToken": "", 
+            "launchType": "FARGATE", 
+            "networkConfiguration": {
+                "awsvpcConfiguration": {
+                    "subnets": [
+                        "**subnet-06437a4061211691a**","**subnet-0437c573c37bbd689**"
+                    ], 
+                    "securityGroups": [
+                        "**sg-0f01c67f9a810f62a**"
+                    ], 
+                    "assignPublicIp": "DISABLED"
+                }
+            }, 
+            "deploymentController": {
+                "type": "ECS"
             }
-        ], 
-        "desiredCount": 2, 
-        "clientToken": "", 
-        "launchType": "FARGATE", 
-        "networkConfiguration": {
-            "awsvpcConfiguration": {
-                "subnets": [
-                    "**subnet-06437a4061211691a**","**subnet-0437c573c37bbd689**"
-                ], 
-                "securityGroups": [
-                    "**sg-0f01c67f9a810f62a**"
-                ], 
-                "assignPublicIp": "DISABLED"
-            }
-        }, 
-        "deploymentController": {
-            "type": "ECS"
         }
-    }
-    </pre>
+        </pre>
 
 **Note: Replace all placeholders for targetGroupArn, subnets & securityGroups with your account specific values for those parameters. You should be able to find these using the cfn-outputs.json file. The subnets used here are the private subnets.**
     
-Run the same curl command as before (or view the load balancer endpoint in your browser) and ensure that you get a response which says it runs on a container.
-    <details>
-    <summary>HINT: CURL Commands</summary>
-    <pre>
-    curl http://<<ALB_DNS_NAME>>
-    curl http://<<ALB_DNS_NAME>>/api
-    curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
-    </pre>
-    </details>
+    Run the same curl command as before (or view the load balancer endpoint in your browser) and ensure that you get a response which says it runs on a container.
+        <details>
+        <summary>HINT: CURL Commands</summary>
+        <pre>
+        curl http://<<ALB_DNS_NAME>>
+        curl http://<<ALB_DNS_NAME>>/api
+        curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
+        </pre>
+        </details>
 
 ### Checkpoint:
 Nice work!  You've created a task definition and are able to deploy the monolith container using ECS.  You've also enabled logging to CloudWatch Logs, so you can verify your container works as expected.
