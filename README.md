@@ -128,7 +128,7 @@ You now have a Docker image built. The -t flag names the resulting container ima
     mhart/alpine-node   8                   135ddefd2040        3 weeks ago         66MB
     </pre>
 
-    *Note: Your output will not be exactly like this, but it will be similar.*
+    **Note: Your output will not be exactly like this, but it will be similar.**
 
     Notice the image is also tagged as "latest".  This is the default behavior if you do not specify a tag of your own, but you can use this as a freeform way to identify an image, e.g. api:1.2 or api:experimental.  This is very convenient for identifying your images and correlating an image with a branch/version of code as well.
 
@@ -206,9 +206,9 @@ When you issue the push command, Docker pushes the layers up to ECR.
 
 Here's sample output from these commands:
     <pre>
-    $ docker tag api:latest 012345678912.dkr.ecr.us-east-1.amazonaws.com/api:latest
-    $ docker push 012345678912.dkr.ecr.us-east-1.amazonaws.com/api:latest
-    The push refers to a repository [012345678912.dkr.ecr.us-east-1.amazonaws.com/api:latest]
+    $ docker tag api:latest <b>012345678912</b>.dkr.ecr.us-east-1.amazonaws.com/api:latest
+    $ docker push <b>012345678912</b>.dkr.ecr.us-east-1.amazonaws.com/api:latest
+    The push refers to a repository [<b>012345678912</b>.dkr.ecr.us-east-1.amazonaws.com/api:latest]
     0169d27ce6ae: Pushed 
     d06bcc55d2f3: Pushed 
     732a53541a3b: Pushed 
@@ -515,57 +515,24 @@ Nice work!  You've created a task definition and are able to deploy the monolith
 
 ## Lab 3 - Break the monolith into microservices
 
-Take this lab as a challange where you break this monolith into microservices  
+Take this lab as a challange where you break this monolith into microservices. Below is a quick reference architecture for microservices on ECS.
+![Reference architecture of microservices on ECS](/images/microservice-containers.png)
 
+### Application Changes for Microsevices
+
+__Define microservice boundaries:__ Defining the boundaries for services is specific to your application's design, but for this REST API one fairly clear approach to breaking it up is to make one service for each of the top level classes of objects that the API serves:
+
+```
+/api/users/* -> A service for all user related REST paths
+/api/posts/* -> A service for all post related REST paths
+/api/threads/* -> A service for all thread related REST paths
+```
+
+So each service will only serve one particular class of REST object, and nothing else.
 
 ### Instructions:
 
-1. Test the placeholder service:
-
-    The CloudFormation stack you launched at the beginning of the workshop included an ALB in front of a placeholder ECS service running a simple container with the NGINX web server. Find the hostname for this ALB in the "LoadBalancerDNS" output variable in the `cfn-output.json` file, and verify that you can load the NGINX default page:
-
-    ![NGINX default page](images/03-nginx.png)
-
-
-3. Update the service to use your task definition:
-
-    Find the ECS cluster named <code>Cluster-<i><b>STACK_NAME</b></i></code>, then select the service named <code><b><i>STACK_NAME</i></b>-MythicalMonolithService-XXX</code> and click "Update" in the upper right:
-
-    ![update service](images/03-update-service.png)
-
-    Update the Task Definition to the revision you created in the previous lab, then click through the rest of the screens and update the service.
-
-4. Test the functionality of the website:
-
-    You can monitor the progress of the deployment on the "Tasks" tab of the service page:
-
-    ![monitoring the update](images/03-deployment.png)
-
-    The update is fully deployed once there is just one instance of the Task running the latest revision:
-
-    ![fully deployed](images/03-fully-deployed.png)
-
-    Visit the S3 static site for the Mythical Mysfits (which was empty earlier) and you should now see the page filled with Mysfits once your update is fully deployed. Remember you can access the website at <code>http://<b><i>BUCKET_NAME</i></b>.s3-website.<b><i>REGION</i></b>.amazonaws.com/</code> where the bucket name can be found in the `workshop-1/cfn-output.json` file:
-
-    ![the functional website](images/03-website.png)
-
-    Click the heart icon to like a Mysfit, then click the Mysfit to see a detailed profile, and ensure that the like count has incremented:
-
-    ![like functionality](images/03-like-count.png)
-
-    This ensures that the monolith can read from and write to DynamoDB, and that it can process likes. Check the CloudWatch logs from ECS and ensure that you can see the "Like processed." message in the logs:
-
-    ![like logs](images/03-like-processed.png)
-
-<details>
-<summary>INFO: What is a service and how does it differ from a task??</summary>
-
-An [ECS service](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html) is a concept where ECS allows you to run and maintain a specified number (the "desired count") of instances of a task definition simultaneously in an ECS cluster.
-
-
-tl;dr a **Service** is comprised of multiple **tasks** and will keep them up and running. See the link above for more detail.
-
-</details>
+There are no instructions for this lab, however you can find the relevant resources in folder named lab-2
 
 ### Checkpoint:
 Sweet! Now you have a load-balanced ECS service managing your containerized Mythical Mysfits application. It's still a single monolith container, but we'll work on breaking it down next.
