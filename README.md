@@ -195,9 +195,7 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
     
     <details>
     <summary>HINT: Create ECR Repository for monolith service </summary>
-    aws ecr create-repository \  
-			--region us-east-1 \  
-			--repository-name api
+    aws ecr create-repository --region us-east-1 --repository-name api
     </details>
     
     Take a note of the repositoryUri from the output    
@@ -257,34 +255,125 @@ At this point, you should have a working container for the monolith codebase sto
 
 ## Lab 2 - Deploy your container using ECR/ECS
 
-Deploying individual containers is not difficult.  However, when you need to coordinate many container deployments, a container management tool like ECS can greatly simplify the task (no pun intended).
+Deploying individual containers is not difficult.  However, when you need to coordinate many container deployments, a container management tool like ECS can greatly simplify the task.
 
 ECS refers to a JSON formatted template called a [Task Definition](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html) that describes one or more containers making up your application or service.  The task definition is the recipe that ECS uses to run your containers as a **task** on your EC2 instances or AWS Fargate.
 
-<details>
-<summary>INFO: What is a task?</summary>
-A task is a running set of containers on a single host. You may hear or see 'task' and 'container' used interchangeably. Often, we refer to tasks instead of containers because a task is the unit of work that ECS launches and manages on your cluster. A task can be a single container, or multiple containers that run together.
-
-Fun fact: a task is very similar to a Kubernetes 'pod'.
-</details>
+    <details>
+    <summary>INFO: What is a task?</summary>
+    A task is a running set of containers on a single host. You may hear or see 'task' and 'container' used interchangeably. Often, we refer to tasks instead of containers because a task is the unit of work that ECS launches and manages on your cluster. A task can be a single container, or multiple containers that run together.
+    </details>
 
 Most task definition parameters map to options and arguments passed to the [docker run](https://docs.docker.com/engine/reference/run/) command which means you can describe configurations like which container image(s) you want to use, host:container port mappings, cpu and memory allocations, logging, and more.
 
 In this lab, you will create a task definition to serve as a foundation for deploying the containerized adoption platform stored in ECR with ECS. You will be using the [Fargate](https://aws.amazon.com/fargate/) launch type, which let's you run containers without having to manage servers or other infrastructure. Fargate containers launch with a networking mode called [awsvpc](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-networking.html), which gives ECS tasks the same networking properties of EC2 instances.  Tasks will essentially receive their own [elastic network interface](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html).  This offers benefits like task-specific security groups.  Let's get started!
 
-![Lab 2 Architecture](images/02-arch.png)
-
-*Note: You will use the AWS Management Console for this lab, but remember that you can programmatically accomplish the same thing using the AWS CLI, SDKs, or CloudFormation.*
+*Note: You will use the AWS CLI for this lab, but remember that you can accomplish the same thing using the AWS Console, SDKs, or CloudFormation.*
 
 ### Instructions:
 
-1. Create an ECS task definition that describes what is needed to run the monolith.
+1. Create an ECS Cluster which will host all services
+
+    aws ecs create-cluster --cluster-name "my_first_ecs_cluster" --region us-east-1
+
+2. Create IAM roles for use with ECS
+
+    The 3 roles required are mentioned below
+    
+    [AWSServiceRoleForECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using-service-linked-roles.html): This is an IAM role which authorizes ECS to manage resources on your account on your behalf, such as updating your load balancer with the details of where your containers are, so that traffic can reach your containers. Use the command below to check if this role exists
+    
+        <pre>
+        aws iam get-role --region us-east-1 --role-name AWSServiceRoleForECS
+        </pre>
+        
+    If it doesn't exist, you can create it using the following command
+        
+        <pre>
+        aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
+        </pre>
+    
+    
+    [TaskRole](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_IAM_role.html?shortFooter=true): This is a role which is used by the ECS tasks. Tasks in Amazon ECS define the containers that should be deployed togehter and the resources they require from a compute/memory perspective. So, the policies below will define the IAM permissions that your docker containers will have. If you write any code for the service that interactes with different AWS service APIs, these roles would need to include those as allowed actions. Create this role using the command line below:
+    
+    Create a file with name <user_name>_iam-trust-relationship.json that contains:
+        <pre>
+        {
+	    "Version": "2012-10-17",
+	    "Statement": [{
+		    "Effect": "Allow",
+		    "Principal": {
+			    "Service": ["ec2.amazonaws.com", "ecs-tasks.amazonaws.com"]
+		    },
+		    "Action": "sts:AssumeRole"
+	        }]
+        }
+        </pre>
+    
+    Create the IAM role:
+        <pre>
+        aws iam create-role --role-name ECSTaskRole --path "/service-role/" --assume-role-policy-document file://<user_name>_iam-trust-relationship.json
+        </pre>
+        
+    Create the policy named <user_name>_ECSTaskRole-Policy.json
+        <pre>
+        {
+	    "Version": "2012-10-17",
+	    "Statement": [{
+		    	"Effect": "Allow",
+			    "Action": [
+				    "ecr:GetAuthorizationToken",
+				    "ecr:BatchCheckLayerAvailability",
+				    "ecr:GetDownloadUrlForLayer",
+				    "ecr:BatchGetImage"
+			    ],
+			    "Resource": "*"
+		    },
+		    {
+			    "Effect": "Allow",
+			    "Action": [
+				    "s3:CreateBucket",
+				    "s3:GetBucketPolicy",
+				    "s3:GetObject",
+				    "s3:GetObjectAcl",
+				    "s3:PutObject",
+				    "s3:PutBucketPolicy"
+			    ],
+			    "Resource": "arn:aws:s3:*:*:*"
+		    },
+		    {
+			    "Effect": "Allow",
+			    "Action": [
+				    "logs:CreateLogGroup",
+				    "logs:CreateLogStream",
+				    "logs:PutLogEvents"
+			    ],
+			    "Resource": "arn:aws:logs:*:*:*"
+		    }
+	        ]
+        }
+        </pre>
+    
+    Attach the policy with the role:
+        <pre>
+        aws iam put-role-policy --role-name ECSTaskRole --policy-name ECSTaskRole_Policy --policy-document file://<user_name>_ECSTaskRole-policy.json
+        </pre>
+        
+    
+    [ECSTaskExecutionRole](https://docs.aws.amazon.com/AmazonECS/latest/userguide/task_execution_IAM_role.html): The Amazon ECS container agent makes calls to the Amazon ECS API on your behalf, so it requires an IAM policy and role for the service to know that the agent belongs to you. It is more convenient to create this role using the console as there is a managed policy for this role.
+    
+    Create the role by selecting Elastic Container Service as the service and then selecting Elastic Container Service Task as the use case. For the permissions, search for *AmazonECSTaskExecutionRolePolicy*
+    
+    ![ECSTaskExecutionRole Creation](images/00-iam-role-1.png)
+    ![ECSTaskExecutionRole Creation](images/00-iam-role-2.png)
+    
+    
+    
+3. Create an ECS task definition that describes what is needed to run the monolith.
 
     The CloudFormation template you ran at the beginning of the workshop created some placeholder ECS resources running a simple "Hello World" NGINX container. (You can see this running now at the public endpoint for the ALB also created by CloudFormation available in `cfn-output.json`.) We'll begin to adapt this placeholder infrastructure to run the monolith by creating a new "Task Definition" referencing the container built in the previous lab.
 
     In the AWS Management Console, navigate to [Task Definitions](https://console.aws.amazon.com/ecs/home#/taskDefinitions) in the ECS dashboard. Find the Task Definition named <code>Monolith-Definition-<b><i>STACK_NAME</i></b></code>, select it, and click "Create new revision". Select the "monolith-service" container under "Container Definitions", and update "Image" to point to the Image URI of the monolith container that you just pushed to ECR (something like `018782361163.dkr.ecr.us-east-1.amazonaws.com/mysfit-mono-oa55rnsdnaud:latest`).
 
-    ![Edit container example](images/02-task-def-edit-container.png)
 
 2. Check the CloudWatch logging settings in the container definition.
 
