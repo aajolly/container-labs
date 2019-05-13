@@ -31,3 +31,156 @@ __Stitching microservices together:__ Once we have created three separate micros
 __Chipping away slowly:__ It is not always possible to fully break apart a monolithic service in one go as it is with this simple example. If our monolith was too complicated to break apart all at once we can still use ALB to redirect just a subset of the traffic from the monolithic service out to a microservice. The rest of the traffic would continue on to the monolith exactly as it did before.
 
 Once we have verified this new microservice works we can remove the old code paths that are no longer being executed in the monolith. Whenever ready repeat the process by splitting another small portion of the code out into a new service. In this way even very complicated monoliths can be gradually broken apart in a safe manner that will not risk existing features.
+
+## Instructions:
+
+1. Create ECR Repositories for all microservices
+
+   <pre>
+   aws ecr create-repository \
+	--region us-east-1 \
+	--repository-name "<b>SERVICE_NAME</b>" \
+	--query "repository.repositoryUri" \
+	--output text
+	</pre>
+	
+	**Note: Make note of the repositoryUri**
+	
+2. Build the container, and assign a tag to it for versioning
+
+   <pre>
+   docker build -t <b>SERVICE_NAME</b> ./services/<b>SERVICE_NAME</b>
+	docker tag <b>SERVICE_NAME</b>:latest <b>repositoryUri</b>:latest
+	</pre>
+	
+3. Push the tag up so we can make a task definition for deploying it
+
+   <pre>
+   docker push <b>repositoryUri</b>:latest
+   </pre>
+
+4. Create json input files for registering task definitions for each service. File name - fargate-task-def-**SERVICE_NAME**.json
+
+   <pre>
+      {
+      "requiresCompatibilities": [
+           "FARGATE"
+      ],
+      "containerDefinitions": [
+           {
+               "name": "<b>SERVICE_NAME</b>-cntr",
+               "image": "<b>012345678912</b>.dkr.ecr.us-east-1.amazonaws.com/users:latest",
+               "memoryReservation": 128,
+               "essential": true,
+               "portMappings": [
+                   {
+                       "containerPort": 3000,
+                        "protocol": "tcp"
+                  }
+               ],
+               "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                     "awslogs-group": "/ecs/<b>SERVICE_NAME</b>",
+                     "awslogs-region": "us-east-1",
+                     "awslogs-stream-prefix": "ecs"
+                  }
+               }
+         }
+      ],
+      "volumes": [],
+      "networkMode": "awsvpc",
+      "memory": "512",
+      "cpu": "256",
+      "executionRoleArn": "arn:aws:iam::<b>012345678912</b>:role/ecsTaskExecutionRole",
+      "taskRoleArn": "arn:aws:iam::<b>012345678912</b>:role/ECSTaskRole",
+      "family": "<b>SERVICE_NAME</b>-task-def"
+   }
+   </pre>
+
+5. Create CloudWatch log groups for each service
+
+   <pre>
+   aws logs create-log-group --log-group-name "/ecs/<b>SERVICE_NAME</b>"
+   </pre>
+
+6. Register task definitions for each service
+
+   <pre>
+   aws ecs register-task-definition --cli-input-json file://fargate-task-def-**SERVICE_NAME**.json
+   </pre>
+   
+7. Create new Target Groups for each service
+
+   <pre>
+   aws elbv2 create-target-group \
+	--region us-east-1 \
+	--name <b>SERVICE_NAME</b>-tg \
+	--vpc-id <b>VPCId</b> \
+	--port 3000 \
+	--protocol HTTP \
+	--health-check-protocol HTTP \
+	--health-check-path / \
+	--health-check-interval-seconds 6 \
+	--health-check-timeout-seconds 5 \
+	--healthy-threshold-count 2 \
+	--unhealthy-threshold-count 2 \
+	--query "TargetGroups[0].TargetGroupArn" \
+	--output text
+   </pre>
+
+8. Get the listener for the existing load balancer
+
+   <pre>
+   aws elbv2 describe-listeners \
+    --region us-east-1 \
+    --query "Listeners[0].ListenerArn" \
+    --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+    --output text
+   </pre>
+
+9. Now lets add rules to the existing listener, this way the existing monolith can continue to serve requests i.e. 0 downtime.
+
+   <pre>
+   aws elbv2 create-rule \
+   --region us-east-1 \
+   --conditions Field=path-pattern,Values='/api/<b>SERVICE_NAME</b>*' \
+   --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912<b/>:targetgroup/<b>SERVICE_NAME</b>-tg/73e2d6bc24d8a067
+   </pre>
+
+10. Create a new service using the json input file for each service. File name - ecs-service-**SERVICE_NAME**.json
+
+   <pre>
+      {
+      "cluster": "my_first_ecs_cluster", 
+      "serviceName": "<b>SERVICE_NAME</b>", 
+      "taskDefinition": "<b>SERVICE_NAME</b>-task-def:1", 
+      "loadBalancers": [
+         {
+               "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:<b>012345678912<b/>:targetgroup/<b>SERVICE_NAME</b>-tg/566b90ffcc10985e", 
+               "containerName": "<b>SERVICE_NAME</b>-cntr", 
+               "containerPort": 3000
+         }
+      ], 
+      "desiredCount": 1, 
+      "clientToken": "", 
+      "launchType": "FARGATE", 
+      "networkConfiguration": {
+         "awsvpcConfiguration": {
+               "subnets": [
+                  "<b>subnet-06437a4061211691a</b>","<b>subnet-0437c573c37bbd689</b>"
+               ], 
+               "securityGroups": [
+                  "<b>sg-0f01c67f9a810f62a</b>"
+               ], 
+               "assignPublicIp": "DISABLED"
+         }
+      }, 
+      "deploymentController": {
+         "type": "ECS"
+      }
+   }
+   </pre>
+
+11. Drain the existing service by changing the desired count to 0.
+12. Test the load balancer endpoint, the users, posts & threads should be different.

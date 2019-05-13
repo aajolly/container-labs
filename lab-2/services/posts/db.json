@@ -2,22 +2,22 @@
   "posts": [
     {
       "thread": 1,
-      "text": "Has anyone checked on the lich recently?",
+      "text": "Has anyone watched the Avengers Endgame?",
       "user": 4
     },
     {
       "thread": 1,
-      "text": "I'll stop by and see how he's doing tomorrow!",
+      "text": "I'm planning on watching it this weekend",
       "user": 2
     },
     {
       "thread": 2,
-      "text": "Come party with the candy people tomorrow!",
+      "text": "Come party with the Avengers tomorrow!",
       "user": 3
     },
     {
       "thread": 2,
-      "text": "Mathematical!",
+      "text": "Fastinating!",
       "user": 2
     },
     {
@@ -27,7 +27,7 @@
     },
     {
       "thread": 3,
-      "text": "I need a new guitar to play the most savory licks in Ooo",
+      "text": "I need a new guitar to play Hotel California",
       "user": 1
     }
   ]

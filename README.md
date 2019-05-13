@@ -424,7 +424,7 @@ List task definitions using the below command
         --region us-east-1 \
         --name monolith-cntr-tg \
         --vpc-id <b>vpc-010b11d3ad023b4ed</b> \
-        --port 80 \
+        --port 3000 \
         --protocol HTTP \
         --target-type ip \
         --health-check-protocol HTTP \
