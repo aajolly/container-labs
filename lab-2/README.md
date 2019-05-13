@@ -160,7 +160,7 @@ Once we have verified this new microservice works we can remove the old code pat
       "taskDefinition": "<b>SERVICE_NAME</b>-task-def:1", 
       "loadBalancers": [
          {
-               "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:<b>012345678912<b/>:targetgroup/<b>SERVICE_NAME</b>-tg/566b90ffcc10985e", 
+               "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/<b>SERVICE_NAME</b>-tg/566b90ffcc10985e", 
                "containerName": "<b>SERVICE_NAME</b>-cntr", 
                "containerPort": 3000
          }
