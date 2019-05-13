@@ -20,11 +20,11 @@ router.get('/api/threads/:threadId', function *() {
 });
 
 router.get('/api/', function *() {
-  this.body = "API ready to receive requests";
+  this.body = "Microservices API ready to receive requests for threads";
 });
 
 router.get('/', function *() {
-  this.body = "Ready to receive requests";
+  this.body = "Microservices Ready to receive requests";
 });
 
 app.use(router.routes());

@@ -21,11 +21,11 @@ router.get('/api/posts/by-user/:userId', function *() {
 });
 
 router.get('/api/', function *() {
-  this.body = "API ready to receive requests";
+  this.body = "Microservices API ready to receive requests for posts";
 });
 
 router.get('/', function *() {
-  this.body = "Ready to receive requests";
+  this.body = "Microservices Ready to receive requests";
 });
 
 app.use(router.routes());

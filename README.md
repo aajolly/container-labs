@@ -98,7 +98,6 @@ We use an Application Load Balancer to round robin requests across multiple serv
 ![Reference diagram of the basic node application deployment](/images/monolithic-no-container.png)
 
 Get the ALB DNS name from cloudformation outputs stored in the file `cfn-output.json` and make sure the following calls work
-
     <pre>
     curl http://<<ALB_DNS_NAME>>
     curl http://<<ALB_DNS_NAME>>/api
@@ -116,14 +115,12 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
 
 2. Build the image using the [Docker build](https://docs.docker.com/engine/reference/commandline/build/) command.
 
-    This command needs to be run in the same directory where your Dockerfile is. **Note the trailing period** which tells the build command to look in the current directory for the Dockerfile.
-
+This command needs to be run in the same directory where your Dockerfile is. **Note the trailing period** which tells the build command to look in the current directory for the Dockerfile.
     <pre>
     $ docker build -t api .
     </pre>
 
-    You now have a Docker image built. The -t flag names the resulting container image. List your docker images and you'll see the "api" image in the list. Here's a sample output, note the api image in the list:
-
+You now have a Docker image built. The -t flag names the resulting container image. List your docker images and you'll see the "api" image in the list. Here's a sample output, note the api image in the list:
     <pre>
     $ docker images
     REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
@@ -137,51 +134,44 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
 
 3. Run the docker container and test the application running as a container:
 
-    Use the [docker run](https://docs.docker.com/engine/reference/run/) command to run your image; the -p flag is used to map the host listening port to the container listening port.
-
+Use the [docker run](https://docs.docker.com/engine/reference/run/) command to run your image; the -p flag is used to map the host listening port to the container listening port.
     <pre>
     $ docker run --name monolith-container -p 3000:3000 api
     </pre>
 
 
-    To test the basic functionality of the monolith service, query the service using a utility like [cURL](https://localhost:3000/api/threads), which is bundled with Cloud9.
+To test the basic functionality of the monolith service, query the service using a utility like [cURL](https://localhost:3000/api/threads), which is bundled with Cloud9.
 
-    Click on the plus sign next to your tabs and choose **New Terminal** or click **Window** -> **New Terminal** from the Cloud9 menu to open a new shell session to run the following curl command.
-
+Click on the plus sign next to your tabs and choose **New Terminal** or click **Window** -> **New Terminal** from the Cloud9 menu to open a new shell session to run the following curl command.
     <pre>
     $ curl http://localhost:3000/api/users
     </pre>
 
-    You should see a JSON array with data about threads.
+You should see a JSON array with data about threads.
 
-    Switch back to the original shell tab where you're running the monolith container to check the output from the monolith.
+Switch back to the original shell tab where you're running the monolith container to check the output from the monolith.
 
-    The monolith container runs in the foreground with stdout/stderr printing to the screen, so when the request is received, you should see a `GET`.
+The monolith container runs in the foreground with stdout/stderr printing to the screen, so when the request is received, you should see a `GET`.
 
-    Here is sample output:
-
+Here is sample output:
     <pre>
     GET /api/users - 3
     </pre>
 
-    In the tab you have the running container, type **Ctrl-C** to stop the running container.  Notice, the container ran in the foreground with stdout/stderr printing to the console.  In a production environment, you would run your containers in the background and configure some logging destination.  We'll worry about logging later, but you can try running the container in the background using the -d flag.
-
+In the tab you have the running container, type **Ctrl-C** to stop the running container.  Notice, the container ran in the foreground with stdout/stderr printing to the console.  In a production environment, you would run your containers in the background and configure some logging destination.  We'll worry about logging later, but you can try running the container in the background using the -d flag.
     <pre>
     $ docker run --name monolith-container -d -p 3000:3000 api
     </pre>
 
-    List running docker containers with the [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) command to make sure the monolith is running.
-
+List running docker containers with the [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) command to make sure the monolith is running.
     <pre>
     $ docker ps
     </pre>
-
     <pre>
     $ docker logs <b><i>CONTAINER_ID or CONTAINER_NAME</i></b>
     </pre>
 
-    Here's sample output from the above command:
-
+Here's sample output from the above command:
     <pre>
     $ docker logs monolith-container
     Worker started
@@ -207,16 +197,14 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
     </pre>
     
     Tag and push your container image to the monolith repository.
-
     <pre>
     $ docker tag api:latest <b><i>ECR_REPOSITORY_URI</i></b>:latest
     $ docker push <b><i>ECR_REPOSITORY_URI</i></b>:latest
     </pre>
 
-    When you issue the push command, Docker pushes the layers up to ECR.
+When you issue the push command, Docker pushes the layers up to ECR.
 
-    Here's sample output from these commands:
-
+Here's sample output from these commands:
     <pre>
     $ docker tag api:latest 012345678912.dkr.ecr.us-east-1.amazonaws.com/api:latest
     $ docker push 012345678912.dkr.ecr.us-east-1.amazonaws.com/api:latest
@@ -228,8 +216,7 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
     latest: digest: sha256:2d27533d5292b7fdf7d0e8d41d5aadbcec3cb6749b5def8b8ea6be716a7c8e17 size: 1158
     </pre>
 
-    View the latest image pushed and tagged in the ECR repository
-
+View the latest image pushed and tagged in the ECR repository
     <pre>
     aws ecr describe-images --repository-name api                           
     {
@@ -243,7 +230,7 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
             "registryId": "012345678912", 
             "repositoryName": "api", 
             "imagePushedAt": 1557648496.0
-            }
+        }
         ]
     }
     </pre>
@@ -258,9 +245,9 @@ At this point, you should have a working container for the monolith codebase sto
 Deploying individual containers is not difficult.  However, when you need to coordinate many container deployments, a container management tool like ECS can greatly simplify the task.
 
 ECS refers to a JSON formatted template called a [Task Definition](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html) that describes one or more containers making up your application or service.  The task definition is the recipe that ECS uses to run your containers as a **task** on your EC2 instances or AWS Fargate.
-
+    
     <details>
-    <summary>INFO: What is a task?</summary>
+    <summary>INFO: What is a task? </summary>
     A task is a running set of containers on a single host. You may hear or see 'task' and 'container' used interchangeably. Often, we refer to tasks instead of containers because a task is the unit of work that ECS launches and manages on your cluster. A task can be a single container, or multiple containers that run together.
     </details>
 
@@ -274,20 +261,20 @@ In this lab, you will create a task definition to serve as a foundation for depl
 
 1. Create an ECS Cluster which will host all services
 
+    <pre>
     aws ecs create-cluster --cluster-name "my_first_ecs_cluster" --region us-east-1
+    </pre>
 
 2. Create IAM roles for use with ECS
 
     The 3 roles required are mentioned below
     
     [AWSServiceRoleForECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using-service-linked-roles.html): This is an IAM role which authorizes ECS to manage resources on your account on your behalf, such as updating your load balancer with the details of where your containers are, so that traffic can reach your containers. Use the command below to check if this role exists
-    
         <pre>
         aws iam get-role --region us-east-1 --role-name AWSServiceRoleForECS
         </pre>
         
     If it doesn't exist, you can create it using the following command
-        
         <pre>
         aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
         </pre>
@@ -367,91 +354,168 @@ In this lab, you will create a task definition to serve as a foundation for depl
     ![ECSTaskExecutionRole Creation](images/00-iam-role-2.png)
     
     
-    
 3. Create an ECS task definition that describes what is needed to run the monolith.
 
-    The CloudFormation template you ran at the beginning of the workshop created some placeholder ECS resources running a simple "Hello World" NGINX container. (You can see this running now at the public endpoint for the ALB also created by CloudFormation available in `cfn-output.json`.) We'll begin to adapt this placeholder infrastructure to run the monolith by creating a new "Task Definition" referencing the container built in the previous lab.
-
-    In the AWS Management Console, navigate to [Task Definitions](https://console.aws.amazon.com/ecs/home#/taskDefinitions) in the ECS dashboard. Find the Task Definition named <code>Monolith-Definition-<b><i>STACK_NAME</i></b></code>, select it, and click "Create new revision". Select the "monolith-service" container under "Container Definitions", and update "Image" to point to the Image URI of the monolith container that you just pushed to ECR (something like `018782361163.dkr.ecr.us-east-1.amazonaws.com/mysfit-mono-oa55rnsdnaud:latest`).
-
+Before you can run a task on your ECS cluster, you must register a task definition. [Task definitions](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html?shortFooter=true) are lists of containers grouped together. Below is an example for our monolith app, name this fargate-task-def.json
+    <pre>
+    {
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "containerDefinitions": [
+        {
+            "name": "monolith-cntr1",
+            "image": "*012345678912*.dkr.ecr.us-east-1.amazonaws.com/api:latest",
+            "memoryReservation": 128,
+            "essential": true,
+            "portMappings": [
+                {
+                    "containerPort": 3000,
+                    "protocol": "tcp"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/monolith-task-def",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ],
+    "volumes": [],
+    "networkMode": "awsvpc",
+    "memory": "512",
+    "cpu": "256",
+    "executionRoleArn": "arn:aws:iam::*012345678912*:role/ECSTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::*012345678912*:role/ECSTaskRole",
+    "family": "monolith-task-def"
+    }
+    </pre>
+    
+*Note: Replace the placeholder account number with your account number.
 
 2. Check the CloudWatch logging settings in the container definition.
 
-    In the previous lab, you attached to the running container to get *stdout*, but no one should be doing that in production and it's good operational practice to implement a centralized logging solution.  ECS offers integration with [CloudWatch logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html) through an awslogs driver that can be enabled in the container definition.
+In the previous lab, you attached to the running container to get *stdout*, but no one should be doing that in production and it's good operational practice to implement a centralized logging solution.  ECS offers integration with [CloudWatch logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html) through an awslogs driver that can be enabled in the container definition.
 
-    Verify that under "Storage and Logging", the "log driver" is set to "awslogs".
-
-    The Log configuration should look something like this:
-
-    ![CloudWatch Logs integration](images/02-awslogs.png)
-
-    Click "Update" to save the container settings and then "Create" to create the Task Definition revision.
-
-3. Run the task definition using the [Run Task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_run_task.html) method.
-
-    You should be at the task definition view where you can do things like create a new revision or invoke certain actions.  In the **Actions** dropdown, select **Run Task** to launch your container.
-
-    ![Run Task](images/02-run-task.png)
-
-    Configure the following fields:
-
-    * **Launch Type** - select **Fargate**
-    * **Cluster** - select your workshop cluster from the dropdown menu
-    * **Task Definition** - select the task definition you created from the dropdown menu
-
-    In the "VPC and security groups" section, enter the following:
-
-    * **Cluster VPC** - Your workshop VPC, named like <code>Mysfits-VPC-<b><i>STACK_NAME</i></b></code>
-    * **Subnets** - Select a public subnet, such as <code>Mysfits-PublicOne-<b><i>STACK_NAME</i></b></code>
-    * **Security goups** - The default is fine, but you can confirm that it allows inbound traffic on port 80
-    * **Auto-assign public IP** - "ENABLED"
-
-    Leave all remaining fields as their defaults and click **Run Task**.
-
-    You'll see the task start in the **PENDING** state (the placeholder NGINX task is still running as well).
-
-    ![Task state](images/02-task-pending.png)
-
-    In a few seconds, click on the refresh button until the task changes to a **RUNNING** state.
-
-    ![Task state](images/02-task-running.png)
-
-4. Test the running task by using cURL from your Cloud9 environment to send a simple GET request.
-
-    First we need to determine the IP of your task. When using the "Fargate" launch type, each task gets its own ENI and Public/Private IP address. Click on the ID of the task you just launched to go to the detail page for the task. Note down the Public IP address to use with your curl command.
-
-
-    ![Container Instance IP](images/02-public-IP.png)
-
-    Run the same curl command as before (or view the endpoint in your browser) and ensure that you get a list of Mysfits in the response.
-
-    <details>
-    <summary>HINT: curl refresher</summary>
+Take note of the log configuration i.e. in the logGroup = /ecs/monolith-task-def
+Create a log group with the same name in cloudwatch logs, else your tasks would fail to start.
     <pre>
-    $ curl http://<b><i>TASK_PUBLIC_IP_ADDRESS</i></b>/mysfits
+    aws logs create-log-group --log-group-name "/ecs/monolith-task-def"
+    </pre>
+
+3. Register the task definition using the task definition json file we created above.
+
+    <pre>
+    aws ecs register-task-definition --cli-input-json file://fargate-task-def.json
+    </pre>
+    
+List task definitions using the below command
+    <pre>
+    aws ecs list-task-definitions
+    </pre>
+
+4. Create a new Target Group
+
+    <pre>
+    aws elbv2 create-target-group \
+    --region us-east-1 \
+    --name monolith-cntr-tg \
+    --vpc-id vpc-010b11d3ad023b4ed \
+    --port 80 \
+    --protocol HTTP \
+    --target-type ip \
+    --health-check-protocol HTTP \
+    --health-check-path / \
+    --health-check-interval-seconds 6 \
+    --health-check-timeout-seconds 5 \
+    --healthy-threshold-count 2 \
+    --unhealthy-threshold-count 2 \
+    --query "TargetGroups[0].TargetGroupArn" \
+    --output text
+    </pre>
+
+*Note: Replace the vpc-id with your specific id. You should be able to get the VPCId for your specific account from the cfn-output.json file. The output of the above command will provide the TargetGroup ARN, make a note of it.
+Now lets modify the listener to point the load balancer to this new target group
+    <pre>
+    Get the listener-arn 
+    
+    aws elbv2 describe-listeners \
+    --region us-east-1 \
+    --query "Listeners[0].ListenerArn" \
+    --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:*012345678912*:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218
+    --output text
+    
+    Modify the listener
+    
+    aws elbv2 modify-listener \
+    --region us-east-1 \
+    --listener-arn arn:aws:elasticloadbalancing:us-east-1:*012345678912*:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+    --query "Listeners[0].ListenerArn" \
+    --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:*012345678912*:targetgroup/monolith-cntr-tg/566b90ffcc10985e \
+    --output text
+    </pre>
+    
+*Note: Replace the placeholder arn's with your own arns. Make a note of the listener arn.
+
+5. Create a new service now
+
+Amazon ECS allows you to run and maintain a specified number of instances of a task definition simultaneously in an Amazon ECS cluster. This is called a service. If any of your tasks should fail or stop for any reason, the Amazon ECS service scheduler launches another instance of your task definition to replace it and maintain the desired count of tasks in the service depending on the scheduling strategy used.
+Create a file named ecs-service.json with the following parameters
+    <pre>
+    {
+        "cluster": "my_first_ecs_cluster", 
+        "serviceName": "monolith-service", 
+        "taskDefinition": "monolith-task-def:1", 
+        "loadBalancers": [
+            {
+                "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:*012345678912*:targetgroup/monolith-cntr-tg/566b90ffcc10985e", 
+                "containerName": "monolith-cntr", 
+                "containerPort": 3000
+            }
+        ], 
+        "desiredCount": 2, 
+        "clientToken": "", 
+        "launchType": "FARGATE", 
+        "networkConfiguration": {
+            "awsvpcConfiguration": {
+                "subnets": [
+                    "*subnet-06437a4061211691a*","*subnet-0437c573c37bbd689*"
+                ], 
+                "securityGroups": [
+                    "*sg-0f01c67f9a810f62a*"
+                ], 
+                "assignPublicIp": "DISABLED"
+            }
+        }, 
+        "deploymentController": {
+            "type": "ECS"
+        }
+    }
+    </pre>
+
+*Note: Replace all placeholders for targetGroupArn, subnets & securityGroups with your account specific values for those parameters. You should be able to find these using the cfn-outputs.json file. The subnets used here are the private subnets.
+    
+Run the same curl command as before (or view the load balancer endpoint in your browser) and ensure that you get a response which says it runs on a container.
+    <details>
+    <summary>HINT: CURL Commands</summary>
+    <pre>
+    curl http://<<ALB_DNS_NAME>>
+    curl http://<<ALB_DNS_NAME>>/api
+    curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
     </pre>
     </details>
-
-    Navigate to the [CloudWatch Logs dashboard](https://console.aws.amazon.com/cloudwatch/home#logs:), and click on the monolith log group (e.g.: `mysfits-MythicalMonolithLogGroup-LVZJ0H2I2N4`).  Logging statements are written to log streams within the log group.  Click on the most recent log stream to view the logs.  The output should look very familiar from your testing in Lab 1.
-
-    ![CloudWatch Log Entries](images/02-cloudwatch-logs.png)
-
-    If the curl command was successful, stop the task by going to your cluster, select the **Tasks** tab, select the running monolith task, and click **Stop**.
 
 ### Checkpoint:
 Nice work!  You've created a task definition and are able to deploy the monolith container using ECS.  You've also enabled logging to CloudWatch Logs, so you can verify your container works as expected.
 
 [*^ back to the top*](#monolith-to-microservices-with-docker-and-aws-fargate)
 
-## Lab 3 - Scale the adoption platform monolith with an ALB
+## Lab 3 - Break the monolith into microservices
 
-The Run Task method you used in the last lab is good for testing, but we need to run the adoption platform as a long running process.
-
-In this lab, you will use an Elastic Load Balancing [Appliction Load Balancer (ALB)](https://aws.amazon.com/elasticloadbalancing/) to distribute incoming requests to your running containers. In addition to simple load balancing, this provieds capabilities like path-based routing to different services.
-
-What ties this all together is an **ECS Service**, which maintains a desired task count (i.e. n number of containers as long running processes) and integrates with the ALB (i.e. handles registration/deregistration of containers to the ALB). An initial ECS service and ALB were created for you by CloudFormation at the beginning of the workshop. In this lab, you'll update those resources to host the containerized monolith service. Later, you'll make a new service from scratch once we break apart the monolith.
-
-![Lab 3 Architecture](images/03-arch.png)
+Take this lab as a challange where you break this monolith into microservices  
 
 
 ### Instructions:

@@ -1,8 +1,8 @@
 ## From Monolith To Microservices
 
-In this example we take our monolithic application deployed on ECS and split it up into microservices.
+In this lab we take our monolithic application deployed on ECS and split it up into microservices.
 
-![Reference architecture of microservices on EC2 Container Service](../images/microservice-containers.png)
+![Reference architecture of microservices on EC2 Container Service](/images/microservice-containers.png)
 
 ## Why Microservices?
 
@@ -31,21 +31,3 @@ __Stitching microservices together:__ Once we have created three separate micros
 __Chipping away slowly:__ It is not always possible to fully break apart a monolithic service in one go as it is with this simple example. If our monolith was too complicated to break apart all at once we can still use ALB to redirect just a subset of the traffic from the monolithic service out to a microservice. The rest of the traffic would continue on to the monolith exactly as it did before.
 
 Once we have verified this new microservice works we can remove the old code paths that are no longer being executed in the monolith. Whenever ready repeat the process by splitting another small portion of the code out into a new service. In this way even very complicated monoliths can be gradually broken apart in a safe manner that will not risk existing features.
-
-## Deployment
-
-1. Launch an ECS cluster using the Cloudformation template:
-
-   ```
-   $ aws cloudformation deploy \
-   --template-file infrastructure/ecs.yml \
-   --region <region> \
-   --stack-name <stack name> \
-   --capabilities CAPABILITY_NAMED_IAM
-   ```
-
-2. Deploy the services onto your cluster: 
-
-   ```
-   $ ./deploy.sh <region> <stack name>
-   ```

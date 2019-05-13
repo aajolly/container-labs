@@ -39,11 +39,11 @@ router.get('/api/posts/by-user/:userId', function *() {
 });
 
 router.get('/api/', function *() {
-  this.body = "API ready to receive requests";
+  this.body = "API now running on ECS and ready to receive requests";
 });
 
 router.get('/', function *() {
-  this.body = "Ready to receive requests";
+  this.body = "Ready to receive requests while running on ECS";
 });
 
 app.use(router.routes());

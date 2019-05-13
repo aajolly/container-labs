@@ -20,11 +20,11 @@ router.get('/api/users/:userId', function *(next) {
 });
 
 router.get('/api/', function *() {
-  this.body = "API ready to receive requests";
+  this.body = "Microservices API ready to receive requests for users";
 });
 
 router.get('/', function *() {
-  this.body = "Ready to receive requests";
+  this.body = "Microservices Ready to receive requests";
 });
 
 app.use(router.routes());
