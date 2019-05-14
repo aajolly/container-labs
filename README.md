@@ -42,32 +42,32 @@ You will be deploying infrastructure on AWS which will have an associated cost. 
 
 2. The template will automatically bring you to the CloudFormation Dashboard and start the stack creation process in the specified region. Give the stack a name that is unique within your account, and proceed through the wizard to launch the stack. Leave all options at their default values, but make sure to check the box to allow CloudFormation to create IAM roles on your behalf:
 
-    ![IAM resources acknowledgement](images/00-cf-create.png)
+![IAM resources acknowledgement](images/00-cf-create.png)
 
-    See the *Events* tab for progress on the stack launch. You can also see details of any problems here if the launch fails. Proceed to the next step once the stack status advances to "CREATE_COMPLETE".
+See the *Events* tab for progress on the stack launch. You can also see details of any problems here if the launch fails. Proceed to the next step once the stack status advances to "CREATE_COMPLETE".
 
 3. Access the AWS Cloud9 Environment created by CloudFormation:
 
-    On the AWS Console home page, type **Cloud9** into the service search bar and select it. Find the environment named like "Project-***STACK_NAME***":
+On the AWS Console home page, type **Cloud9** into the service search bar and select it. Find the environment named like "Project-***STACK_NAME***":
 
-    ![Cloud9 project selection](images/00-cloud9-select.png)
+![Cloud9 project selection](images/00-cloud9-select.png)
 
-    When you open the IDE, you'll be presented with a welcome screen that looks like this:
-    ![cloud9-welcome](images/00-cloud9-welcome.png)
+When you open the IDE, you'll be presented with a welcome screen that looks like this:
+![cloud9-welcome](images/00-cloud9-welcome.png)
 
-    On the left pane (Blue), any files downloaded to your environment will appear here in the file tree. In the middle (Red) pane, any documents you open will show up here. Test this out by double clicking on README.md in the left pane and edit the file by adding some arbitrary text. Then save it by clicking File and Save. Keyboard shortcuts will work as well. On the bottom, you will see a bash shell (Yellow). For the remainder of the lab, use this shell to enter all commands. You can also customize your Cloud9 environment by changing themes, moving panes around, etc. (if you like the dark theme, you can select it by clicking the gear icon in the upper right, then "Themes", and choosing the dark theme).
+On the left pane (Blue), any files downloaded to your environment will appear here in the file tree. In the middle (Red) pane, any documents you open will show up here. Test this out by double clicking on README.md in the left pane and edit the file by adding some arbitrary text. Then save it by clicking File and Save. Keyboard shortcuts will work as well. On the bottom, you will see a bash shell (Yellow). For the remainder of the lab, use this shell to enter all commands. You can also customize your Cloud9 environment by changing themes, moving panes around, etc. (if you like the dark theme, you can select it by clicking the gear icon in the upper right, then "Themes", and choosing the dark theme).
 
 4. Clone the Container Immersion Day Repository:
 
-    In the bottom panel of your new Cloud9 IDE, you will see a terminal command line terminal open and ready to use.  Run the following git command in the terminal to clone the necessary code to complete this tutorial:
+In the bottom panel of your new Cloud9 IDE, you will see a terminal command line terminal open and ready to use.  Run the following git command in the terminal to clone the necessary code to complete this tutorial:
 
     ```
     $ git clone https://github.com/aajolly/container-immersion-day-15-05-2019.git
     ```
 
-    After cloning the repository, you'll see that your project explorer now includes the files cloned.
+After cloning the repository, you'll see that your project explorer now includes the files cloned.
 
-    In the terminal, change directory to the subdirectory for this lab in the repo:
+In the terminal, change directory to the subdirectory for this lab in the repo:
 
     ```
     $ cd container-immersion-day-15-05-2019/lab-1
@@ -79,7 +79,7 @@ You will be deploying infrastructure on AWS which will have an associated cost. 
     $ script/setup
     ```
 
-    This script will delete some unneeded Docker images to free up disk space, update aws-cli version and update some packages.  Make sure you see the "Success!" message when the script completes.
+This script will delete some unneeded Docker images to free up disk space, update aws-cli version and update some packages.  Make sure you see the "Success!" message when the script completes.
 
 
 ## About the monolith
@@ -98,6 +98,7 @@ We use an Application Load Balancer to round robin requests across multiple serv
 ![Reference diagram of the basic node application deployment](/images/monolithic-no-container.png)
 
 Get the ALB DNS name from cloudformation outputs stored in the file `cfn-output.json` and make sure the following calls work
+    
     <pre>
     curl http://<<ALB_DNS_NAME>>
     curl http://<<ALB_DNS_NAME>>/api
@@ -128,9 +129,9 @@ You now have a Docker image built. The -t flag names the resulting container ima
     mhart/alpine-node   8                   135ddefd2040        3 weeks ago         66MB
     </pre>
 
-    **Note: Your output will not be exactly like this, but it will be similar.**
+**Note:** Your output will not be exactly like this, but it will be similar.
 
-    Notice the image is also tagged as "latest".  This is the default behavior if you do not specify a tag of your own, but you can use this as a freeform way to identify an image, e.g. api:1.2 or api:experimental.  This is very convenient for identifying your images and correlating an image with a branch/version of code as well.
+Notice the image is also tagged as "latest".  This is the default behavior if you do not specify a tag of your own, but you can use this as a freeform way to identify an image, e.g. api:1.2 or api:experimental.  This is very convenient for identifying your images and correlating an image with a branch/version of code as well.
 
 3. Run the docker container and test the application running as a container:
 
@@ -181,22 +182,22 @@ Here's sample output from the above command:
 
 4. Now that you have a working Docker image, you can tag and push the image to [Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/).  ECR is a fully-managed Docker container registry that makes it easy to store, manage, and deploy Docker container images. In the next lab, we'll use ECS to pull your image from ECR.
 
-    Create an ECR repository using the [aws ecr cli](https://docs.aws.amazon.com/cli/latest/reference/ecr/index.html#cli-aws-ecr). You can use the hint below
+Create an ECR repository using the [aws ecr cli](https://docs.aws.amazon.com/cli/latest/reference/ecr/index.html#cli-aws-ecr). You can use the hint below
     
     <details>
     <summary>HINT: Create ECR Repository for monolith service </summary>
     aws ecr create-repository --region us-east-1 --repository-name api
     </details>
     
-    Take a note of the repositoryUri from the output    
+Take a note of the repositoryUri from the output    
     
-    Retrieve the login command to use to authenticate your Docker client to your registry.
+Retrieve the login command to use to authenticate your Docker client to your registry.
     
     <pre>
     $(aws ecr get-login --no-include-email --region us-east-1)
     </pre>
     
-    Tag and push your container image to the monolith repository.
+Tag and push your container image to the monolith repository.
     <pre>
     $ docker tag api:latest <b><i>ECR_REPOSITORY_URI</i></b>:latest
     $ docker push <b><i>ECR_REPOSITORY_URI</i></b>:latest
@@ -255,7 +256,7 @@ Most task definition parameters map to options and arguments passed to the [dock
 
 In this lab, you will create a task definition to serve as a foundation for deploying the containerized adoption platform stored in ECR with ECS. You will be using the [Fargate](https://aws.amazon.com/fargate/) launch type, which let's you run containers without having to manage servers or other infrastructure. Fargate containers launch with a networking mode called [awsvpc](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-networking.html), which gives ECS tasks the same networking properties of EC2 instances.  Tasks will essentially receive their own [elastic network interface](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html).  This offers benefits like task-specific security groups.  Let's get started!
 
-*Note: You will use the AWS CLI for this lab, but remember that you can accomplish the same thing using the AWS Console, SDKs, or CloudFormation.*
+*Note:** You will use the AWS CLI for this lab, but remember that you can accomplish the same thing using the AWS Console, SDKs, or CloudFormation.
 
 ### Instructions:
 
@@ -267,21 +268,22 @@ In this lab, you will create a task definition to serve as a foundation for depl
 
 2. Create IAM roles for use with ECS
 
-    The 3 roles required are mentioned below
+The 3 roles required are mentioned below
     
-    [AWSServiceRoleForECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using-service-linked-roles.html): This is an IAM role which authorizes ECS to manage resources on your account on your behalf, such as updating your load balancer with the details of where your containers are, so that traffic can reach your containers. Use the command below to check if this role exists
-        <pre>
-        aws iam get-role --region us-east-1 --role-name AWSServiceRoleForECS
-        </pre>
+* [AWSServiceRoleForECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using-service-linked-roles.html): This is an IAM role which authorizes ECS to manage resources on your account on your behalf, such as updating your load balancer with the details of where your containers are, so that traffic can reach your containers. Use the command below to check if this role exists
+
+    <pre>
+    aws iam get-role --region us-east-1 --role-name AWSServiceRoleForECS
+    </pre>
         
-    If it doesn't exist, you can create it using the following command
-        <pre>
-        aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
-        </pre>
+If it doesn't exist, you can create it using the following command
+    <pre>
+    aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
+    </pre>
     
     
-    [TaskRole](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_IAM_role.html?shortFooter=true): This is a role which is used by the ECS tasks. Tasks in Amazon ECS define the containers that should be deployed togehter and the resources they require from a compute/memory perspective. So, the policies below will define the IAM permissions that your docker containers will have. If you write any code for the service that interactes with different AWS service APIs, these roles would need to include those as allowed actions. Create this role using the command line below:
-    
+* [TaskRole](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_IAM_role.html?shortFooter=true): This is a role which is used by the ECS tasks. Tasks in Amazon ECS define the containers that should be deployed togehter and the resources they require from a compute/memory perspective. So, the policies below will define the IAM permissions that your docker containers will have. If you write any code for the service that interactes with different AWS service APIs, these roles would need to include those as allowed actions. Create this role using the command line below:
+
     Create a file with name <user_name>_iam-trust-relationship.json that contains:
         <pre>
         {
@@ -346,8 +348,8 @@ In this lab, you will create a task definition to serve as a foundation for depl
         </pre>
         
     
-    [ECSTaskExecutionRole](https://docs.aws.amazon.com/AmazonECS/latest/userguide/task_execution_IAM_role.html): The Amazon ECS container agent makes calls to the Amazon ECS API on your behalf, so it requires an IAM policy and role for the service to know that the agent belongs to you. It is more convenient to create this role using the console as there is a managed policy for this role.
-    
+* [ECSTaskExecutionRole](https://docs.aws.amazon.com/AmazonECS/latest/userguide/task_execution_IAM_role.html): The Amazon ECS container agent makes calls to the Amazon ECS API on your behalf, so it requires an IAM policy and role for the service to know that the agent belongs to you. It is more convenient to create this role using the console as there is a managed policy for this role.
+
     Create the role by selecting Elastic Container Service as the service and then selecting Elastic Container Service Task as the use case. For the permissions, search for *AmazonECSTaskExecutionRolePolicy*
     
     ![ECSTaskExecutionRole Creation](images/00-iam-role-1.png)
@@ -394,7 +396,7 @@ Before you can run a task on your ECS cluster, you must register a task definiti
     }
     </pre>
     
-**Note: Replace the placeholder account number with your account number.**
+**Note:** Replace the placeholder account number with your account number.
 
 2. Check the CloudWatch logging settings in the container definition.
 
@@ -437,7 +439,7 @@ List task definitions using the below command
         --output text
         </pre>
 
-**Note: Replace the vpc-id with your specific id. You should be able to get the VPCId for your specific account from the cfn-output.json file. The output of the above command will provide the TargetGroup ARN, make a note of it.**
+**Note:** Replace the vpc-id with your specific id. You should be able to get the VPCId for your specific account from the cfn-output.json file. The output of the above command will provide the TargetGroup ARN, make a note of it.
 
 Now lets modify the listener to point the load balancer to this new target group
     
@@ -460,47 +462,48 @@ Now lets modify the listener to point the load balancer to this new target group
         --output text
         </pre>
     
-    **Note: Replace the placeholder arn's with your own arns. Make a note of the listener arn.**
+    **Note:** Replace the placeholder arn's with your own arns. Make a note of the listener arn.
 
 5. Create a new service now
 
-    Amazon ECS allows you to run and maintain a specified number of instances of a task definition simultaneously in an Amazon ECS cluster. This is called a service. If any of your tasks should fail or stop for any reason, the Amazon ECS service scheduler launches another instance of your task definition to replace it and maintain the desired count of tasks in the service depending on the scheduling strategy used.
-    Create a file named ecs-service.json with the following parameters
-    
-        <pre>
-        {
-            "cluster": "my_first_ecs_cluster", 
-            "serviceName": "monolith-service", 
-            "taskDefinition": "monolith-task-def:1", 
-            "loadBalancers": [
-                {
-                    "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:**012345678912**:targetgroup/monolith-cntr-tg/566b90ffcc10985e", 
-                    "containerName": "monolith-cntr", 
-                    "containerPort": 3000
-                }
-            ], 
-            "desiredCount": 2, 
-            "clientToken": "", 
-            "launchType": "FARGATE", 
-            "networkConfiguration": {
-                "awsvpcConfiguration": {
-                    "subnets": [
-                        "**subnet-06437a4061211691a**","**subnet-0437c573c37bbd689**"
-                    ], 
-                    "securityGroups": [
-                        "**sg-0f01c67f9a810f62a**"
-                    ], 
-                    "assignPublicIp": "DISABLED"
-                }
-            }, 
-            "deploymentController": {
-                "type": "ECS"
-            }
-        }
-        </pre>
+Amazon ECS allows you to run and maintain a specified number of instances of a task definition simultaneously in an Amazon ECS cluster. This is called a service. If any of your tasks should fail or stop for any reason, the Amazon ECS service scheduler launches another instance of your task definition to replace it and maintain the desired count of tasks in the service depending on the scheduling strategy used.
+Create a file named ecs-service.json with the following parameters
 
-**Note: Replace all placeholders for targetGroupArn, subnets & securityGroups with your account specific values for those parameters. You should be able to find these using the cfn-outputs.json file. The subnets used here are the private subnets.**
-    Create service using the command below
+    <pre>
+    {
+        "cluster": "my_first_ecs_cluster", 
+        "serviceName": "monolith-service", 
+        "taskDefinition": "monolith-task-def:1", 
+        "loadBalancers": [
+            {
+                "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:**012345678912**:targetgroup/monolith-cntr-tg/566b90ffcc10985e", 
+                "containerName": "monolith-cntr", 
+                "containerPort": 3000
+            }
+        ], 
+        "desiredCount": 2, 
+        "clientToken": "", 
+        "launchType": "FARGATE", 
+        "networkConfiguration": {
+            "awsvpcConfiguration": {
+                "subnets": [
+                    "**subnet-06437a4061211691a**","**subnet-0437c573c37bbd689**"
+                ], 
+                "securityGroups": [
+                    "**sg-0f01c67f9a810f62a**"
+                ], 
+                "assignPublicIp": "DISABLED"
+            }
+        }, 
+        "deploymentController": {
+            "type": "ECS"
+        }
+    }
+    </pre>
+
+**Note:** Replace all placeholders for targetGroupArn, subnets & securityGroups with your account specific values for those parameters. You should be able to find these using the cfn-outputs.json file. The subnets used here are the private subnets.
+
+Create service using the command below
     <pre>
     aws ecs create-service \
     --region us-east-1 \
@@ -509,14 +512,15 @@ Now lets modify the listener to point the load balancer to this new target group
     --cli-input-json file://ecs-service.json
     </pre>
     
-    Run the same curl command as before (or view the load balancer endpoint in your browser) and ensure that you get a response which says it runs on a container.
+Run the same curl command as before (or view the load balancer endpoint in your browser) and ensure that you get a response which says it runs on a container.
+
     <details>
     <summary>HINT: CURL Commands</summary>
-    <pre>
-    curl http://<<ALB_DNS_NAME>>
-    curl http://<<ALB_DNS_NAME>>/api
-    curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
-    </pre>
+        <pre>
+        curl http://<<ALB_DNS_NAME>>
+        curl http://<<ALB_DNS_NAME>>/api
+        curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
+        </pre>
     </details>
 
 ### Checkpoint:
@@ -718,6 +722,10 @@ These will be referenced in the deployment-group you'd create for CodeDeploy.
 
 * Create the application which is a collection of deployment groups and revisions.
 
+    <details>
+    <summary>INFO: What is an Application? </summary>
+    A name that uniquely identifies the application you want to deploy. CodeDeploy uses this name, which functions as a container, to ensure the correct combination of revision, deployment configuration, and deployment group are referenced during a deployment.
+    </details>
     <pre>
     aws deploy create-application \
     --region us-east-1 \
@@ -727,6 +735,10 @@ These will be referenced in the deployment-group you'd create for CodeDeploy.
 
 * Create an input json file for deployment-group named deployment-group-threads.json
 
+    <details>
+    <summary>INFO: What is a Deployment Group? </summary>
+    From an Amazon ECS perspective, specifies the Amazon ECS service with the containerized application to deploy as a task set, a production and optional test listener used to serve traffic to the deployed application, when to reroute traffic and terminate the deployed application's original task set, and optional trigger, alarm, and rollback settings.
+    </details>
     <pre>
         {
         "applicationName": "threadsApp", 
