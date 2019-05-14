@@ -188,7 +188,11 @@ Once we have verified this new microservice works we can remove the old code pat
 11. Create the service
 
    <pre>
-   aws ecs create-service --cli-input-json file://ecs-service-<b>SERVICE_NAME</b>.json
+   aws ecs create-service \
+   --region us-east-1 \
+   --cluster my_first_ecs_cluster \
+   --service-name <b>SERVICE_NAME</b> \
+   --cli-input-json file://ecs-service-<b>SERVICE_NAME</b>.json
    </pre>
 
 12. Drain the existing service by changing the desired count to 0.

@@ -1,5 +1,5 @@
 Monolith to Microservices with Docker and AWS Fargate
-====================================================
+========================================================
 
 Welcome to the Container Immersion Day Labs!
 
@@ -8,7 +8,7 @@ In this lab, you'll deploy a basic nodejs monolithic application using Auto Scal
 ### Requirements:
 
 * AWS account - if you don't have one, it's easy and free to [create one](https://aws.amazon.com/).
-* AWS IAM account with elevated privileges allowing you to interact with CloudFormation, IAM, EC2, ECS, ECR, ELB/ALB, VPC, CodeDeploy, CloudWatch, Cloud9. [Learn how](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html).
+* AWS IAM account with elevated privileges allowing you to interact with CloudFormation, IAM, EC2, ECS, ECR, ALB, VPC, CodeDeploy, CloudWatch, Cloud9. [Learn how](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html).
 * Familiarity with [Docker](https://www.docker.com/), and [AWS](httpts://aws.amazon.com) - *not required but a bonus*.
 
 ### What you'll do:
@@ -16,8 +16,8 @@ In this lab, you'll deploy a basic nodejs monolithic application using Auto Scal
 * **Lab Setup:** [Setup working environment on AWS](#lets-begin)
 * **Lab 1:** [Containerize the monolith](#lab-1---containerize-the-monolith)
 * **Lab 2:** [Deploy the container using AWS Fargate](#lab-2---deploy-your-container-using-ecrecs)
-* **Lab 3:** [Break the monolith into microservices](#lab-3---break-the-monolith)
-* **Lab 4:** [CodeDeploy Blue/Green deployments](#lab-4-codedeploy-blue-green-deployments)
+* **Lab 3:** [Break the monolith into microservices](#lab-3---break-the-monolith-into-microservices)
+* **Lab 4:** [CodeDeploy Blue/Green deployments](#lab-4-codedeploy-bluegreen-deployments)
 * **Cleanup** [Put everything away nicely](#lab-cleanup)
 
 
@@ -30,7 +30,7 @@ You will be deploying infrastructure on AWS which will have an associated cost. 
 
 ### Lab Setup:
 
-1. Open the CloudFormation launch template link below in a new tab. The link will load the CloudFormation Dashboard and start the stack creation process in the chosen region:
+1. Open the CloudFormation launch template link below in a new tab. The link will load the CloudFormation Dashboard and start the stack creation process in the chosen region (us-east-1 recommended):
    
     Click on one of the **Deploy to AWS** icons below to region to stand up the core lab infrastructure.
 
@@ -502,7 +502,11 @@ Now lets modify the listener to point the load balancer to this new target group
 **Note: Replace all placeholders for targetGroupArn, subnets & securityGroups with your account specific values for those parameters. You should be able to find these using the cfn-outputs.json file. The subnets used here are the private subnets.**
     Create service using the command below
     <pre>
-    aws ecs create-service --cli-input-json file://ecs-service.json
+    aws ecs create-service \
+    --region us-east-1 \
+    --cluster my_first_ecs_cluster \
+    --service-name monolith-service \
+    --cli-input-json file://ecs-service.json
     </pre>
     
     Run the same curl command as before (or view the load balancer endpoint in your browser) and ensure that you get a response which says it runs on a container.
@@ -548,20 +552,359 @@ Sweet! Now you have a load-balanced ECS service managing your containerized Myth
 
 ## Lab 4: CodeDeploy Blue/Green deployments
 
+In AWS CodeDeploy, blue/green deployments help you minimize downtime during application updates. They allow you to launch a new version of your application alongside the old version and test the new version before you reroute traffic to it. You can also monitor the deployment process and, if there is an issue, quickly roll back.
+
+With this new capability, you can create a new service in AWS Fargate or Amazon ECS  that uses CodeDeploy to manage the deployments, testing, and traffic cutover for you. When you make updates to your service, CodeDeploy triggers a deployment. This deployment, in coordination with Amazon ECS, deploys the new version of your service to the green target group, updates the listeners on your load balancer to allow you to test this new version, and performs the cutover if the health checks pass.
+
+**Note:** Although not necessary, however it is useful if you have completed lab-3 above i.e. breaking the monolith into microservices.
+
+1. Setup an IAM service role for CodeDeploy
+
+Because you will be using AWS CodeDeploy to handle the deployments of your application to Amazon ECS, AWS CodeDeploy needs permissions to call Amazon ECS APIs, modify your load balancers, invoke Lambda functions, and describe CloudWatch alarms. Before you create an Amazon ECS service that uses the blue/green deployment type, you must create the AWS CodeDeploy IAM role (ecsCodeDeployServiceRole).
+
+* Create a file named CodeDeploy-iam-trust-policy.json
+
+    <pre>
+        {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "",
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": [
+                        "codedeploy.amazonaws.com"
+                    ]
+                },
+                "Action": "sts:AssumeRole"
+            }
+        ]
+    }
+    </pre>
+
+* Create the role with name ecsCodeDeployServiceRole
+
+    <pre>
+    aws iam create-role --role-name ecsCodeDeployServiceRole --assume-role-policy-document file://CodeDeploy-iam-trust-policy.json
+    </pre>
+    
+* Since the compute platform we'll be working with is ECS, use the managed policy AWSCodeDeployRoleForECS
+
+    <pre>
+    aws iam attach-role-policy --role-name ecsCodeDeployServiceRole --policy-arn arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForECS
+    </pre>
+    
+2. Lets pick **threads** service for this lab.
+
+Since the services we deployed in previous labs use ECS as the deployment controller, it is not possible to change this configuration using the update-service API call. Hence, we need to either a) delete the service or, b) create a new service with a different deployment controller i.e. CODE_DEPLOY. For this lab, we'll go with option a)
+
+* Change the desired count for this service to 0
+
+    <pre>
+    aws ecs update-service \
+    --region us-east-1 \
+    --cluster my_first_ecs_cluster \
+    --service threads \
+    --desired-count 0
+    </pre>
+    
+    **Note:** Wait for the running count to be 0
+    
+    <pre>
+    aws ecs describe-services \
+    --region us-east-1 \
+    --cluster my_first_ecs_cluster \
+    --service threads \
+    --query "services[*].taskSets[*].runningCount"
+    </pre>
+    
+* Delete the service once the runningCount = 0
+
+    <pre>
+    aws ecs delete-service \
+    --region us-east-1 \
+    --cluster my_first_ecs_cluster \
+    --service threads
+    </pre>
+
+3. Lets update the db.json file for threads microservice and add another thread to it.
+4. Once done, build a new docker image with a tag of 0.1. Tag & push this image to ECR repository of threads. By now, you should be familiar with this process.
+5. Re-use the taskDefinition file for threads i.e. fargate-task-def-threads.json
+6. Update the ecs-service-threads.json file to reflect CODE_DEPLOY as the deployment controller
+
+    <pre>
+    {
+        "cluster": "my_first_ecs_cluster", 
+        "serviceName": "threads", 
+        "taskDefinition": "threads-task-def:1", 
+        "loadBalancers": [
+            {
+                "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:776055576349:targetgroup/threads-tg/b61b2b03ecb4c757", 
+                "containerName": "threads-cntr", 
+                "containerPort": 3000
+            }
+        ], 
+        "desiredCount": 1, 
+        "clientToken": "", 
+        "launchType": "FARGATE",
+        "schedulingStrategy": "REPLICA",
+        "networkConfiguration": {
+            "awsvpcConfiguration": {
+                "subnets": [
+                    "<b>subnet-06437a4061211691a</b>","<b>subnet-0437c573c37bbd689</b>"
+                ], 
+                "securityGroups": [
+                    "<b>sg-0f01c67f9a810f62a</b>"
+                ], 
+                "assignPublicIp": "DISABLED"
+            }
+        }, 
+        "deploymentController": {
+            "type": "<b>CODE_DEPLOY</b>"
+        }
+    }
+    </pre>
+
+7. Re-create the **threads** service
+
+    <pre>
+    aws ecs create-service \
+    --region us-east-1 \
+    --cluster my_first_ecs_cluster \
+    --service-name threads \
+    --cli-input-json file://ecs-service-threads.json
+    </pre>
+
+8. Create a new target group & a listener for green environment
+
+These will be referenced in the deployment-group you'd create for CodeDeploy.
+
+* Target Group
+
+    <pre>
+    aws elbv2 create-target-group \
+	--region us-east-1 \
+	--name <b>threads-tg-2</b> \
+	--vpc-id <b>VPCId</b> \
+	--port 3000 \
+	--protocol HTTP \
+	--target-type ip \
+	--health-check-protocol HTTP \
+	--health-check-path / \
+	--health-check-interval-seconds 6 \
+	--health-check-timeout-seconds 5 \
+	--healthy-threshold-count 2 \
+	--unhealthy-threshold-count 2 \
+	--query "TargetGroups[0].TargetGroupArn" \
+	--output text
+   </pre>
+
+* Listener with a different port
+
+    <pre>
+    aws elbv2 create-listener \
+    --region us-east-1 \
+    --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0 \
+    --port 8080 \
+    --protocol HTTP \
+    --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/threads-tg-2/b0ce12f4f6957bb7 \
+    --query "Listener[0].Listener.Arn" \
+    --output text
+    </pre>
+
+**Note:** Make note of the targetGroupArn & listenerArn
+
+9. Create CodeDeploy resources
+
+* Create the application which is a collection of deployment groups and revisions.
+
+    <pre>
+    aws deploy create-application \
+    --region us-east-1 \
+    --application-name threadsApp \
+    --compute-platform ECS
+    </pre>
+
+* Create an input json file for deployment-group named deployment-group-threads.json
+
+    <pre>
+        {
+        "applicationName": "threadsApp", 
+        "deploymentGroupName": "threadsDG", 
+        "deploymentConfigName": "CodeDeployDefault.ECSAllAtOnce", 
+        "serviceRoleArn": "arn:aws:iam::<b>012345678912</b>:role/ecsCodeDeployServiceRole",
+        "ecsServices": [
+            {
+                "serviceName": "threads", 
+                "clusterName": "my\_first\_ecs\_cluster"
+            }
+        ],
+        "alarmConfiguration": {
+            "enabled": false, 
+            "ignorePollAlarmFailure": true, 
+            "alarms": []
+        }, 
+        "autoRollbackConfiguration": {
+            "enabled": true, 
+            "events": [
+                "DEPLOYMENT_FAILURE",
+                "DEPLOYMENT\_STOP\_ON\_REQUEST",
+                "DEPLOYMENT\_STOP\_ON\_ALARM"
+            ]
+        }, 
+        "deploymentStyle": {
+            "deploymentType": "BLUE_GREEN", 
+            "deploymentOption": "WITH\_TRAFFIC\_CONTROL"
+        }, 
+        "blueGreenDeploymentConfiguration": {
+            "terminateBlueInstancesOnDeploymentSuccess": {
+                "action": "TERMINATE", 
+                "terminationWaitTimeInMinutes": 5
+            }, 
+            "deploymentReadyOption": {
+                "actionOnTimeout": "CONTINUE_DEPLOYMENT", 
+                "waitTimeInMinutes": 0
+            }
+        }, 
+        "loadBalancerInfo": {
+            "targetGroupPairInfoList": [
+                {
+                    "targetGroups": [
+                        {
+                            "name": "<b>threads-tg</b>"
+                        },
+                        {
+                            "name": "<b>threads-tg-2</b>"
+                        }
+                    ], 
+                    "prodTrafficRoute": {
+                        "listenerArns": [
+                            "<b>arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218</b>"
+                        ]
+                    }, 
+                    "testTrafficRoute": {
+                        "listenerArns": [
+                            "<b>arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:listener/app/alb-container-labs/86a05a2486126aa0/d3336ca308561265</b>"
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+    </pre>
+    
+    <pre>
+    aws deploy create-deployment-group \
+    --region us-east-1 \
+    --cli-input-json file://deployment-group-threads.json
+    </pre>
+
+* Creating a lifecycle hook for testing the new release. As discussed in the theory session, these are very helpful. The content in the 'hooks' section of the AppSpec file varies, depending on the compute platform for your deployment. The 'hooks' section for an EC2/On-Premises deployment contains mappings that link deployment lifecycle event hooks to one or more scripts. The 'hooks' section for an Amazon ECS deployment specifies Lambda validation functions to run during a deployment lifecycle event. If an event hook is not present, no operation is executed for that event. This section is required only if you are running scripts or Lambda validation functions as part of the deployment.
+  So there are two parts to creating a hook, first an IAM role needs to be created which is used by lambda to pass back the testing results to CodeDeploy. You can either create the role using the CLI with the following policies
+  - Managed Policy - AWSLambdaBasicExecutionRole for CloudWatch logs
+  - And a new policy with the following permissions
+
+    <pre>
+        {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "codedeploy:PutLifecycleEventHookExecutionStatus"
+                ],
+                "Resource": "arn:aws:codedeploy:us-east-1:<b>012345678912</b>:deploymentgroup:*",
+                "Effect": "Allow"
+            }
+        ]
+    }
+    </pre>
+    
+* Change directory to lab-3/hooks, do **npm install** and zip the contents.
+* Create a lambda function
+
+    <pre>
+    aws lambda  create-function \
+    --region us-east-1
+    --function-name CodeDeployHook_pre-traffic-hook \
+    --zip-file fileb://file-path/<b>file</b>.zip \
+    --role <b>role-arn</b> \
+    --environment Variables={TargetUrl=http://alb-container-labs-1439628024.us-east-1.elb.amazonaws.com:8080/api/threads} \
+    --handler pre-traffic-hook.handler \
+    --runtime nodejs8.10
+    </pre>
+
+**Note:** Feel free to review the configuration of the lambda function, its a simple check to verify the API works, however you can add other validation checks as well.
+
+* Create an [AppSpec](https://docs.aws.amazon.com/codedeploy/latest/userguide/application-specification-files.html) file. It is used to manage each deployment as a series of lifecycle event hooks, which are defined in the file. For ECS as the compute platform, it can be either YAML or JSON formatted. For this lab, we'll use JSON.
+
+    <pre>
+    {
+        "version": 0.0,
+        "Resources": [
+        {
+        "TargetService": {
+            "Type": "AWS::ECS::Service",
+            "Properties": {
+            "TaskDefinition": "threads-task-def:1",
+            "LoadBalancerInfo": {
+                "ContainerName": "threads-cntr",
+                "ContainerPort": 3000
+            },
+            "PlatformVersion": "LATEST",
+            "NetworkConfiguration": {
+                "awsvpcConfiguration": {
+                "subnets": [
+                    "<b>subnet-06437a4061211691a</b>","<b>subnet-0437c573c37bbd689</b>"
+                ],
+                "securityGroups": [
+                    "<b>sg-0f01c67f9a810f62a</b>"
+                ],
+                "assignPublicIp": "DISABLED"
+                }
+            }
+            }
+        }
+        }
+    ],
+    "Hooks": [
+        {
+        "BeforeAllowTraffic": "CodeDeployHook_pre-traffic-hook"
+        }
+    ]
+    }
+    </pre>
+
+* Start the deployment using the new aws ecs deloy CLI commands
+
+    <pre>
+    aws ecs deploy \
+    --region us-east-1 \
+    --cluster my\_first\_ecs\_cluster \
+    --service threads \
+    --task-definition fargate-task-def-threads.json \
+    --codedeploy-appspec appspec.json \
+    --codedeploy-application threadsApp \
+    --codedeploy-deployment-group threadsDG
+    </pre>
+
+**Note:** The above will trigger a CodeDeploy Deployment, you can view the status of this deployment, at the end of it, it should look like ![CodeDeploy Status](images/00-codedeploy-status.png)
+
+If you now make some changes to the docker container threads, for example add another thread to db.json file and build a new container with a tag 0.1 + push to ECR. You can then create a revision of task definition and specifying the new image. During this process, selecting the existing CodeDeploy Application & Deployment-Group. This should trigger a new deployment in CodeDeploy and you can monitor the status in a similar way. Also feel free to check lambda logs in CloudWatch and add some of your own tests to this lambda.
 
 
 ### Checkpoint:
-Congratulations, you've successfully rolled out the like microservice from the monolith.  If you have time, try repeating this lab to break out the adoption microservice.  Otherwise, please remember to follow the steps below in the **Workshop Cleanup** to make sure all assets created during the workshop are removed so you do not see unexpected charges after today.
+Congratulations, you've successfully deployed a service with blue/green deployments from CodeDeploy and with 0 downtime. If you have time, convert the other services to blue/green as well.  Otherwise, please remember to follow the steps below in the **Lab Cleanup** to make sure all assets created during the workshop are removed so you do not see unexpected charges after today.
 
-## Workshop Cleanup
+## Lab Cleanup
 
 This is really important because if you leave stuff running in your account, it will continue to generate charges.  Certain things were created by CloudFormation and certain things were created manually throughout the workshop.  Follow the steps below to make sure you clean up properly.
 
 Delete manually created resources throughout the labs:
 
-* ECS service(s) - first update the desired task count to be 0.  Then delete the ECS service itself.
+* ECS service(s) - first update the desired task count to be 0. Then delete the ECS service itself.
+* Delete the ECS cluster as well
 * ECR - delete any Docker images pushed to your ECR repository.
-* CloudWatch logs groups
-* ALBs and associated target groups
-
-Finally, [delete the CloudFormation stack](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html) launched at the beginning of the workshop to clean up the rest.  If the stack deletion process encountered errors, look at the Events tab in the CloudFormation dashboard, and you'll see what steps failed.  It might just be a case where you need to clean up a manually created asset that is tied to a resource goverened by CloudFormation.
+* CloudWatch log groups
+* Delete the newly created Target groups for microservices
+* Remove the project folder(container-immersion-day-15-05-2019) from cloud9 using the rm -vrf command
+* Delete the cloudformation stack
