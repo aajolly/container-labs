@@ -327,7 +327,7 @@ If it doesn't exist, you can create it using the following command
 				    "s3:PutObject",
 				    "s3:PutBucketPolicy"
 			    ],
-			    "Resource": "arn:aws:s3:*:*:*"
+			    "Resource": "arn:aws:s3:\*:\*:\*"
 		    },
 		    {
 			    "Effect": "Allow",
@@ -336,7 +336,7 @@ If it doesn't exist, you can create it using the following command
 				    "logs:CreateLogStream",
 				    "logs:PutLogEvents"
 			    ],
-			    "Resource": "arn:aws:logs:*:*:*"
+			    "Resource": "arn:aws:logs:\*:\*:\*"
 		    }
 	        ]
         }
