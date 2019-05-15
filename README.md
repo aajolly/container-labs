@@ -315,7 +315,7 @@ If it doesn't exist, you can create it using the following command
 				    "ecr:GetDownloadUrlForLayer",
 				    "ecr:BatchGetImage"
 			    ],
-			    "Resource": "*"
+			    "Resource": "\*"
 		    },
 		    {
 			    "Effect": "Allow",
