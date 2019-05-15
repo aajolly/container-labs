@@ -354,7 +354,10 @@ If it doesn't exist, you can create it using the following command
     
     Attach the policy with the role:
         <pre>
-        aws iam put-role-policy --role-name ECSTaskRole --policy-name ECSTaskRole_Policy --policy-document file://<user_name>_ECSTaskRole-policy.json
+        aws iam put-role-policy \
+        --role-name ECSTaskRole \
+        --policy-name ECSTaskRole\_Policy \
+        --policy-document file://<user_name>_ECSTaskRole-policy.json
         </pre>
         
     
@@ -597,13 +600,17 @@ Because you will be using AWS CodeDeploy to handle the deployments of your appli
 * Create the role with name ecsCodeDeployServiceRole
 
     <pre>
-    aws iam create-role --role-name ecsCodeDeployServiceRole --assume-role-policy-document file://CodeDeploy-iam-trust-policy.json
+    aws iam create-role \
+    --role-name ecsCodeDeployServiceRole \
+    --assume-role-policy-document file://CodeDeploy-iam-trust-policy.json
     </pre>
     
 * Since the compute platform we'll be working with is ECS, use the managed policy AWSCodeDeployRoleForECS
 
     <pre>
-    aws iam attach-role-policy --role-name ecsCodeDeployServiceRole --policy-arn arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForECS
+    aws iam attach-role-policy \
+    --role-name ecsCodeDeployServiceRole \
+    --policy-arn arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForECS
     </pre>
     
 2. Lets pick **threads** service for this lab.
@@ -635,7 +642,7 @@ Since the services we deployed in previous labs use ECS as the deployment contro
     <pre>
     aws ecs delete-service \
     --region us-east-1 \
-    --cluster my_first_ecs_cluster \
+    --cluster my\_first\_ecs\_cluster \
     --service threads
     </pre>
 
@@ -682,7 +689,7 @@ Since the services we deployed in previous labs use ECS as the deployment contro
     <pre>
     aws ecs create-service \
     --region us-east-1 \
-    --cluster my_first_ecs_cluster \
+    --cluster my\_first\_ecs\_cluster \
     --service-name threads \
     --cli-input-json file://ecs-service-threads.json
     </pre>
