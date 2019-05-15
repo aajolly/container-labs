@@ -300,7 +300,7 @@ If it doesn't exist, you can create it using the following command
     
     Create the IAM role:
         <pre>
-        aws iam create-role --role-name ECSTaskRole --path "/service-role/" --assume-role-policy-document file://<user_name>_iam-trust-relationship.json
+        aws iam create-role --role-name ECSTaskRole --path "/" --assume-role-policy-document file://<user_name>_iam-trust-relationship.json
         </pre>
         
     Create the policy named <user_name>_ECSTaskRole-Policy.json
