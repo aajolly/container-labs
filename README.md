@@ -300,45 +300,53 @@ If it doesn't exist, you can create it using the following command
     
     Create the IAM role:
         <pre>
-        aws iam create-role --role-name ECSTaskRole --path "/" --assume-role-policy-document file://<user_name>_iam-trust-relationship.json
+        aws iam create-role --role-name ECSTaskRole --assume-role-policy-document file://<user_name>_iam-trust-relationship.json
         </pre>
         
     Create the policy named <user_name>_ECSTaskRole-Policy.json
         <pre>
-        {
-	    "Version": "2012-10-17",
-	    "Statement": [{
-		    	"Effect": "Allow",
-			    "Action": [
-				    "ecr:GetAuthorizationToken",
-				    "ecr:BatchCheckLayerAvailability",
-				    "ecr:GetDownloadUrlForLayer",
-				    "ecr:BatchGetImage"
-			    ],
-			    "Resource": "\*"
-		    },
-		    {
-			    "Effect": "Allow",
-			    "Action": [
-				    "s3:CreateBucket",
-				    "s3:GetBucketPolicy",
-				    "s3:GetObject",
-				    "s3:GetObjectAcl",
-				    "s3:PutObject",
-				    "s3:PutBucketPolicy"
-			    ],
-			    "Resource": "arn:aws:s3:\*:\*:\*"
-		    },
-		    {
-			    "Effect": "Allow",
-			    "Action": [
-				    "logs:CreateLogGroup",
-				    "logs:CreateLogStream",
-				    "logs:PutLogEvents"
-			    ],
-			    "Resource": "arn:aws:logs:\*:\*:\*"
-		    }
-	        ]
+            {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "ecs:DiscoverPollEndpoint",
+                        "ecs:PutAccountSettingDefault",
+                        "ecs:CreateCluster",
+                        "ecs:DeleteService",
+                        "ecs:DescribeTaskSets",
+                        "ecs:DeleteTaskSet",
+                        "ecs:DescribeTaskDefinition",
+                        "ecs:PutAccountSetting",
+                        "ecs:ListServices",
+                        "ecs:DeregisterTaskDefinition",
+                        "ecs:ListAccountSettings",
+                        "ecs:UpdateService",
+                        "ecs:CreateService",
+                        "ecs:DeleteAccountSetting",
+                        "ecs:ListTaskDefinitionFamilies",
+                        "ecs:RegisterTaskDefinition",
+                        "ecs:DescribeServices",
+                        "ecs:UpdateServicePrimaryTaskSet",
+                        "ecs:ListTaskDefinitions",
+                        "ecs:UpdateTaskSet",
+                        "ecs:CreateTaskSet",
+                        "ecs:ListClusters"
+                    ],
+                    "Resource": "\*"
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": "ecs:\*",
+                    "Resource": [
+                        "arn:aws:ecs:\*:\*:task-definition/\*\*",
+                        "arn:aws:ecs:\*:\*:task/\*",
+                        "arn:aws:ecs:\*:\*:container-instance/\*",
+                        "arn:aws:ecs:\*:\*:cluster/\*"
+                    ]
+                }
+            ]
         }
         </pre>
     
@@ -367,7 +375,7 @@ Before you can run a task on your ECS cluster, you must register a task definiti
     "containerDefinitions": [
         {
             "name": "monolith-cntr1",
-            "image": "**012345678912**.dkr.ecr.us-east-1.amazonaws.com/api:latest",
+            "image": "<b>012345678912</b>.dkr.ecr.us-east-1.amazonaws.com/api:latest",
             "memoryReservation": 128,
             "essential": true,
             "portMappings": [
@@ -390,8 +398,8 @@ Before you can run a task on your ECS cluster, you must register a task definiti
     "networkMode": "awsvpc",
     "memory": "512",
     "cpu": "256",
-    "executionRoleArn": "arn:aws:iam::**012345678912**:role/ECSTaskExecutionRole",
-    "taskRoleArn": "arn:aws:iam::**012345678912**:role/ECSTaskRole",
+    "executionRoleArn": "arn:aws:iam::<b>012345678912</b>:role/ECSTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::<b>012345678912</b>:role/ECSTaskRole",
     "family": "monolith-task-def"
     }
     </pre>
@@ -468,15 +476,14 @@ Now lets modify the listener to point the load balancer to this new target group
 
 Amazon ECS allows you to run and maintain a specified number of instances of a task definition simultaneously in an Amazon ECS cluster. This is called a service. If any of your tasks should fail or stop for any reason, the Amazon ECS service scheduler launches another instance of your task definition to replace it and maintain the desired count of tasks in the service depending on the scheduling strategy used.
 Create a file named ecs-service.json with the following parameters
-
     <pre>
     {
-        "cluster": "my_first_ecs_cluster", 
+        "cluster": "my\_first\_ecs\_cluster", 
         "serviceName": "monolith-service", 
         "taskDefinition": "monolith-task-def:1", 
         "loadBalancers": [
             {
-                "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:**012345678912**:targetgroup/monolith-cntr-tg/566b90ffcc10985e", 
+                "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/monolith-cntr-tg/566b90ffcc10985e", 
                 "containerName": "monolith-cntr", 
                 "containerPort": 3000
             }
@@ -487,10 +494,10 @@ Create a file named ecs-service.json with the following parameters
         "networkConfiguration": {
             "awsvpcConfiguration": {
                 "subnets": [
-                    "**subnet-06437a4061211691a**","**subnet-0437c573c37bbd689**"
+                    "<b>subnet-06437a4061211691a</b>","<b>subnet-0437c573c37bbd689</b>"
                 ], 
                 "securityGroups": [
-                    "**sg-0f01c67f9a810f62a**"
+                    "<b>sg-0f01c67f9a810f62a</b>"
                 ], 
                 "assignPublicIp": "DISABLED"
             }
@@ -507,13 +514,12 @@ Create service using the command below
     <pre>
     aws ecs create-service \
     --region us-east-1 \
-    --cluster my_first_ecs_cluster \
+    --cluster my\_first\_ecs\_cluster \
     --service-name monolith-service \
     --cli-input-json file://ecs-service.json
     </pre>
     
 Run the same curl command as before (or view the load balancer endpoint in your browser) and ensure that you get a response which says it runs on a container.
-
     <details>
     <summary>HINT: CURL Commands</summary>
         <pre>
@@ -617,9 +623,9 @@ Since the services we deployed in previous labs use ECS as the deployment contro
     <pre>
     aws ecs describe-services \
     --region us-east-1 \
-    --cluster my_first_ecs_cluster \
+    --cluster my\_first\_ecs\_cluster \
     --service threads \
-    --query "services[*].taskSets[*].runningCount"
+    --query "services[\*].taskSets[\*].runningCount"
     </pre>
     
 * Delete the service once the runningCount = 0
