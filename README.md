@@ -169,7 +169,7 @@ List running docker containers with the [docker ps](https://docs.docker.com/engi
     $ docker ps
     </pre>
     <pre>
-    $ docker logs <b><i>CONTAINER_ID or CONTAINER_NAME</i></b>
+    $ docker logs <b><i>CONTAINER\_ID or CONTAINER_NAME</i></b>
     </pre>
 
 Here's sample output from the above command:
@@ -228,7 +228,7 @@ View the latest image pushed and tagged in the ECR repository
             "imageTags": [
                 "latest"
             ], 
-            "registryId": "**012345678912**", 
+            "registryId": "<b>012345678912</b>", 
             "repositoryName": "api", 
             "imagePushedAt": 1557648496.0
         }
@@ -263,7 +263,7 @@ In this lab, you will create a task definition to serve as a foundation for depl
 1. Create an ECS Cluster which will host all services
 
     <pre>
-    aws ecs create-cluster --cluster-name "my_first_ecs_cluster" --region us-east-1
+    aws ecs create-cluster --cluster-name "my\_first\_ecs\_cluster" --region us-east-1
     </pre>
 
 2. Create IAM roles for use with ECS
@@ -300,7 +300,9 @@ If it doesn't exist, you can create it using the following command
     
     Create the IAM role:
         <pre>
-        aws iam create-role --role-name ECSTaskRole --assume-role-policy-document file://<user_name>_iam-trust-relationship.json
+        aws iam create-role \
+        --role-name ECSTaskRole \
+        --assume-role-policy-document file://<user_name>_iam-trust-relationship.json
         </pre>
         
     Create the policy named <user_name>_ECSTaskRole-Policy.json
@@ -340,7 +342,7 @@ If it doesn't exist, you can create it using the following command
                     "Effect": "Allow",
                     "Action": "ecs:\*",
                     "Resource": [
-                        "arn:aws:ecs:\*:\*:task-definition/\*\*",
+                        "arn:aws:ecs:\*:\*:task-definition/\*:\*",
                         "arn:aws:ecs:\*:\*:task/\*",
                         "arn:aws:ecs:\*:\*:container-instance/\*",
                         "arn:aws:ecs:\*:\*:cluster/\*"
