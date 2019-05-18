@@ -379,16 +379,16 @@ If it doesn't exist, you can create it using the following command
                         "ecs:CreateTaskSet",
                         "ecs:ListClusters"
                     ],
-                    "Resource": "\*"
+                    "Resource": "*"
                 },
                 {
                     "Effect": "Allow",
-                    "Action": "ecs:\*",
+                    "Action": "ecs:*",
                     "Resource": [
-                        "arn:aws:ecs:\*:\*:task-definition/\*:\*",
-                        "arn:aws:ecs:\*:\*:task/\*",
-                        "arn:aws:ecs:\*:\*:container-instance/\*",
-                        "arn:aws:ecs:\*:\*:cluster/\*"
+                        "arn:aws:ecs:\*:\*:task-definition/*:*",
+                        "arn:aws:ecs:\*:\*:task/*",
+                        "arn:aws:ecs:\*:\*:container-instance/*",
+                        "arn:aws:ecs:\*:\*:cluster/*"
                     ]
                 }
             ]
@@ -401,7 +401,7 @@ If it doesn't exist, you can create it using the following command
     aws iam put-role-policy \
     --role-name ECSTaskRole \
     --policy-name ECSTaskRole\_Policy \
-    --policy-document file://<user_name>_ECSTaskRole-policy.json
+    --policy-document file://<b>user_name</b>_ECSTaskRole-policy.json
     </pre>
     
 * [ECSTaskExecutionRole](https://docs.aws.amazon.com/AmazonECS/latest/userguide/task_execution_IAM_role.html): The Amazon ECS container agent makes calls to the Amazon ECS API on your behalf, so it requires an IAM policy and role for the service to know that the agent belongs to you. It is more convenient to create this role using the console as there is a managed policy for this role.
@@ -473,7 +473,9 @@ Create a log group with the same name in cloudwatch logs, else your tasks would 
 3. Register the task definition using the task definition json file we created above.
 
     <pre>
-      aws ecs register-task-definition --cli-input-json file://fargate-task-def.json
+      aws ecs register-task-definition 
+      --region us-east-1 \
+      --cli-input-json file://fargate-task-def.json
     </pre>
 
 List task definitions using the below command
@@ -536,7 +538,7 @@ Create a file named ecs-service.json with the following parameters
 
 <pre>
    {
-        "cluster": "my\_first\_ecs\_cluster", 
+        "cluster": "my_first_ecs_cluster", 
         "serviceName": "monolith-service", 
         "taskDefinition": "monolith-task-def:1", 
         "loadBalancers": [
@@ -671,7 +673,6 @@ Because you will be using AWS CodeDeploy to handle the deployments of your appli
     --role-name ecsCodeDeployServiceRole \
     --policy-arn arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForECS
     </pre>
-    
 2. Lets pick **threads** service for this lab.
 
 Since the services we deployed in previous labs use ECS as the deployment controller, it is not possible to change this configuration using the update-service API call. Hence, we need to either a) delete the service or, b) create a new service with a different deployment controller i.e. CODE_DEPLOY. For this lab, we'll go with option a)
