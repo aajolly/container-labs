@@ -100,7 +100,7 @@ This script will delete some unneeded Docker images to free up disk space, updat
    {
        "Account": "<b>012345678912</b>", 
        "UserId": "AROA3JMEEK4OZ5747L6EY:i-06839568c2699c038", 
-       "Arn": "arn:aws:sts::<b>012345678912</b>:assumed-role/<b>C9LabAdminRole</b>C9LabAdminRole/i-06839568c2699c038"
+       "Arn": "arn:aws:sts::<b>012345678912</b>:assumed-role/<b>C9LabAdminRole</b>/i-06839568c2699c038"
    }
    </pre>
 
