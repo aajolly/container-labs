@@ -1,5 +1,7 @@
 #! /bin/bash
 
+STACK_NAME=$1
+
 set -eu
 
 echo "Updating all packages"
@@ -21,6 +23,6 @@ echo "Installing jq..."
 sudo yum install jq -y
 
 echo "Fetching Cloudformation Outputs..."
-aws cloudformation describe-stacks --stack-name "container-labs" --region us-east-1 | jq -r '[.Stacks[0].Outputs[] | {key: .OutputKey, value: .OutputValue}] | from_entries' > cfn-output.json
+aws cloudformation describe-stacks --stack-name $STACK_NAME --region us-east-1 | jq -r '[.Stacks[0].Outputs[] | {key: .OutputKey, value: .OutputValue}] | from_entries' > cfn-output.json
 
 echo "Success!"

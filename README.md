@@ -76,7 +76,7 @@ $ cd container-immersion-day-15-05-2019/lab-1
 5. Run some additional automated setup steps with the `setup` script:
 
     <pre>
-      $ script/setup
+      $ script/setup <b>stack-name</b>
     </pre>
 
 This script will delete some unneeded Docker images to free up disk space, update aws-cli version and update some packages.  Make sure you see the "Success!" message when the script completes.
@@ -316,7 +316,6 @@ If it doesn't exist, you can create it using the following command
         }
     </pre>
     
-        <pre>
     Create the IAM role:
     
     <pre>
@@ -544,7 +543,6 @@ Create a file named ecs-service.json with the following parameters
     }
 </pre>
 
-    <pre>
 **Note:** Replace all placeholders for targetGroupArn, subnets & securityGroups with your account specific values for those parameters. You should be able to find these using the cfn-outputs.json file. The subnets used here are the private subnets.
 
 Create service using the command below
