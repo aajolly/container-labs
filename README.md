@@ -344,7 +344,7 @@ If it doesn't exist, you can create it using the following command
     <pre>
      aws iam create-role \
      --role-name ECSTaskRole \
-     --assume-role-policy-document file://<user_name>_iam-trust-relationship.json
+     --assume-role-policy-document file://<b>user_name</b>_iam-trust-relationship.json
     </pre>
     
     Create the policy named <user_name>_ECSTaskRole-Policy.json
