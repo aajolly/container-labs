@@ -81,8 +81,31 @@ $ cd container-immersion-day-15-05-2019/lab-1
 
 This script will delete some unneeded Docker images to free up disk space, update aws-cli version and update some packages.  Make sure you see the "Success!" message when the script completes.
 
+6. Check the IAM role assigned to your Cloud9 instance by
+
+   <pre>
+     aws sts get-caller-identity
+   </pre>
+
+   **Note**: 
+
+   - If the identitty displayed is not an IAM role, go to preferences —> AWS Settings and disable "AWS managed temporary credentials"
+   - Now go to EC2 Console and look for cloud9 instance. Attach an IAM role that has full admin rights. As part of the cloudformation stack, an IAM role with full admin privileges has been configured for you, feel free to use the same (role name - C9LabAdminRole)
+
+   
+
+7. Once done, issue the get-caller-identity command again and the output should display the correct role
+
+   <pre>
+   {
+       "Account": "<b>012345678912</b>", 
+       "UserId": "AROA3JMEEK4OZ5747L6EY:i-06839568c2699c038", 
+       "Arn": "arn:aws:sts::<b>012345678912</b>:assumed-role/<b>C9LabAdminRole</b>C9LabAdminRole/i-06839568c2699c038"
+   }
+   </pre>
 
 ## About the monolith
+
 ### Basic Node.js Server
 
 This is an example of a basic monolithic node.js service that has been designed to run directly on a server, without a container.

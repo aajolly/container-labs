@@ -1,8 +1,0 @@
-{
-  "PrivateSubnetTwo": "subnet-0437c573c37bbd689",
-  "Cloud9Env": "https://us-east-1.console.aws.amazon.com/cloud9/ide/d2478cbcdf804476a8193e2823ff4e79?region=us-east-1",
-  "LoadBalancerDNS": "alb-container-labs-1439628024.us-east-1.elb.amazonaws.com",
-  "MonolithTargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:776055576349:targetgroup/conta-Monol-K9290G7WZ41L/1889d75e248e9e3c",
-  "PrivateSubnetOne": "subnet-06437a4061211691a",
-  "StackName": "container-labs"
-}
