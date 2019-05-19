@@ -90,7 +90,7 @@ This script will delete some unneeded Docker images to free up disk space, updat
    **Note**: 
 
    - If the identitty displayed is not an IAM role, go to preferences —> AWS Settings and disable "AWS managed temporary credentials"
-   - Now go to EC2 Console and look for cloud9 instance. Attach an IAM role that has full admin rights. As part of the cloudformation stack, an IAM role with full admin privileges has been configured for you, feel free to use the same (role name = C9LabAdminRole, instance profileName = C9_InstanceProfile)
+   - Now go to EC2 Console and look for cloud9 instance. Attach an IAM role that has full admin rights. As part of the cloudformation stack, an IAM role with full admin privileges has been configured for you, feel free to use the same (role name = container-labs-C9-Role, instance profileName = C9_InstanceProfile)
 
    
 
