@@ -90,7 +90,7 @@ This script will delete some unneeded Docker images to free up disk space, updat
    **Note**: 
 
    - If the identitty displayed is not an IAM role, go to preferences —> AWS Settings and disable "AWS managed temporary credentials"
-   - Now go to EC2 Console and look for cloud9 instance. Attach an IAM role that has full admin rights. As part of the cloudformation stack, an IAM role with full admin privileges has been configured for you, feel free to use the same (role name - C9LabAdminRole)
+   - Now go to EC2 Console and look for cloud9 instance. Attach an IAM role that has full admin rights. As part of the cloudformation stack, an IAM role with full admin privileges has been configured for you, feel free to use the same (role name = C9LabAdminRole, instance profileName = C9_InstanceProfile)
 
    
 
@@ -100,7 +100,7 @@ This script will delete some unneeded Docker images to free up disk space, updat
    {
        "Account": "<b>012345678912</b>", 
        "UserId": "AROA3JMEEK4OZ5747L6EY:i-06839568c2699c038", 
-       "Arn": "arn:aws:sts::<b>012345678912</b>:assumed-role/<b>C9LabAdminRole</b>/i-06839568c2699c038"
+       "Arn": "arn:aws:sts::<b>012345678912</b>:assumed-role/<b>C9_InstanceProfile</b>/i-06839568c2699c038"
    }
    </pre>
 
@@ -632,7 +632,7 @@ In AWS CodeDeploy, blue/green deployments help you minimize downtime during appl
 
 With this new capability, you can create a new service in AWS Fargate or Amazon ECS  that uses CodeDeploy to manage the deployments, testing, and traffic cutover for you. When you make updates to your service, CodeDeploy triggers a deployment. This deployment, in coordination with Amazon ECS, deploys the new version of your service to the green target group, updates the listeners on your load balancer to allow you to test this new version, and performs the cutover if the health checks pass.
 
-**Note:** Although not necessary, however it is useful if you have completed lab-3 above i.e. breaking the monolith into microservices.
+**Note:** Make sure you have completed lab-3 above as this lab uses examples that are relevant if you have completed lab-3. This lab can very well be adapted to use lab-2 only, however changes need to be made especially where service_name = threads is referenced.
 
 1. Setup an IAM service role for CodeDeploy
 
@@ -692,9 +692,9 @@ Since the services we deployed in previous labs use ECS as the deployment contro
     <pre>
     aws ecs describe-services \
     --region us-east-1 \
-    --cluster my\_first\_ecs\_cluster \
+    --cluster my_first_ecs_cluster \
     --service threads \
-    --query "services[\*].taskSets[\*].runningCount"
+    --query "services[*].taskSets[*].runningCount"
     </pre>
     
 * Delete the service once the runningCount = 0
@@ -825,7 +825,7 @@ These will be referenced in the deployment-group you'd create for CodeDeploy.
         "ecsServices": [
             {
                 "serviceName": "threads", 
-                "clusterName": "my\_first\_ecs\_cluster"
+                "clusterName": "my_first_ecs_cluster"
             }
         ],
         "alarmConfiguration": {
@@ -837,13 +837,13 @@ These will be referenced in the deployment-group you'd create for CodeDeploy.
             "enabled": true, 
             "events": [
                 "DEPLOYMENT_FAILURE",
-                "DEPLOYMENT\_STOP\_ON\_REQUEST",
-                "DEPLOYMENT\_STOP\_ON\_ALARM"
+                "DEPLOYMENT_STOP_ON_REQUEST",
+                "DEPLOYMENT_STOP_ON_ALARM"
             ]
         }, 
         "deploymentStyle": {
             "deploymentType": "BLUE_GREEN", 
-            "deploymentOption": "WITH\_TRAFFIC\_CONTROL"
+            "deploymentOption": "WITH_TRAFFIC_CONTROL"
         }, 
         "blueGreenDeploymentConfiguration": {
             "terminateBlueInstancesOnDeploymentSuccess": {
