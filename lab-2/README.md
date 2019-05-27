@@ -101,13 +101,17 @@ Once we have verified this new microservice works we can remove the old code pat
 5. Create CloudWatch log groups for each service
 
    <pre>
-   aws logs create-log-group --log-group-name "/ecs/<b>SERVICE_NAME</b>" --region us-east-1
+   aws logs create-log-group \
+   --region us-east-1 \
+   --log-group-name "/ecs/<b>SERVICE_NAME</b>"
    </pre>
 
 6. Register task definitions for each service
 
    <pre>
-   aws ecs register-task-definition --cli-input-json file://fargate-task-def-<b>SERVICE_NAME</b>.json
+   aws ecs register-task-definition \
+   --region us-east-1 \
+   --cli-input-json file://fargate-task-def-<b>SERVICE_NAME</b>.json
    </pre>
    
 7. Create new Target Groups for each service
@@ -134,18 +138,18 @@ Once we have verified this new microservice works we can remove the old code pat
 
    <pre>
    aws elbv2 describe-listeners \
-    --region us-east-1 \
-    --query "Listeners[0].ListenerArn" \
-    --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
-    --output text
+   --region us-east-1 \
+   --query "Listeners[0].ListenerArn" \
+   --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+   --output text
    </pre>
 
-9. Now lets add rules to the existing listener, this way the existing monolith can continue to serve requests i.e. 0 downtime.
+9. Now lets add rules to the existing listener, this way the existing monolith can continue to serve requests i.e. zero downtime.
 
    <pre>
    aws elbv2 create-rule \
    --region us-east-1 \
-   --listener-arn arn:aws:elasticloadbalancing:us-east-1:776055576349:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+   --listener-arn <b>arn:aws:elasticloadbalancing:us-east-1:776055576349:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218</b> \
    --priority 1 \
    --conditions Field=path-pattern,Values='/api/<b>SERVICE_NAME</b>*' \
    --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/<b>SERVICE_NAME</b>-tg/73e2d6bc24d8a067
