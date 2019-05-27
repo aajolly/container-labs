@@ -62,7 +62,7 @@ On the left pane (Blue), any files downloaded to your environment will appear he
 In the bottom panel of your new Cloud9 IDE, you will see a terminal command line terminal open and ready to use.  Run the following git command in the terminal to clone the necessary code to complete this tutorial:
 
 <pre>
-  $ git clone https://github.com/aajolly/container-immersion-day-15-05-2019.git
+$ git clone https://github.com/aajolly/container-immersion-day-15-05-2019.git
 </pre>
 
 After cloning the repository, you'll see that your project explorer now includes the files cloned.
@@ -75,19 +75,19 @@ $ cd container-immersion-day-15-05-2019/lab-1
 
 5. Run some additional automated setup steps with the `setup` script:
 
-    <pre>
-      $ script/setup <b>stack-name</b>
-    </pre>
+<pre>
+$ script/setup <b>stack-name</b>
+</pre>
 
 This script will delete some unneeded Docker images to free up disk space, update aws-cli version and update some packages.  Make sure you see the "Success!" message when the script completes.
 
 6. Check the IAM role assigned to your Cloud9 instance by
 
-   <pre>
-     aws sts get-caller-identity
-   </pre>
+<pre>
+aws sts get-caller-identity
+</pre>
 
-   **Note**: 
+**Note**: 
 
    - If the identitty displayed is not an IAM role, go to preferences —> AWS Settings and disable "AWS managed temporary credentials"
    - Now go to EC2 Console and look for cloud9 instance. Attach an IAM role that has full admin rights. As part of the cloudformation stack, an IAM role with full admin privileges has been configured for you, feel free to use the same (role name = container-labs-C9-Role, instance profileName = C9_InstanceProfile)
@@ -123,9 +123,9 @@ We use an Application Load Balancer to round robin requests across multiple serv
 Get the ALB DNS name from cloudformation outputs stored in the file `cfn-output.json` and make sure the following calls work
 
 <pre>
-curl http://<<ALB_DNS_NAME>>
-curl http://<<ALB_DNS_NAME>>/api
-curl http://<<ALB_DNS_NAME>>/api/users | jq '.'
+curl http://[ALB_DNS_NAME]
+curl http://[ALB_DNS_NAME]/api
+curl http://[ALB_DNS_NAME]/api/users | jq '.'
 </pre>
 
 ## Lab 1 - Containerize the monolith
@@ -142,16 +142,16 @@ The current infrastructure has always been running directly on EC2 VMs. Our firs
 This command needs to be run in the same directory where your Dockerfile is. **Note the trailing period** which tells the build command to look in the current directory for the Dockerfile.
 
 <pre>
-  $ docker build -t api .
+$ docker build -t api .
 </pre>
 
 You now have a Docker image built. The -t flag names the resulting container image. List your docker images and you'll see the "api" image in the list. Here's a sample output, note the api image in the list
 
 <pre>
-    $ docker images
-    REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-    api                 latest              6a7abc1cc4c3        7 minutes ago       67.6MB
-    mhart/alpine-node   8                   135ddefd2040        3 weeks ago         66MB
+$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+api                 latest              6a7abc1cc4c3        7 minutes ago       67.6MB
+mhart/alpine-node   8                   135ddefd2040        3 weeks ago         66MB
 </pre>
 
 **Note:** Your output will not be exactly like this, but it will be similar.
@@ -162,9 +162,9 @@ Notice the image is also tagged as "latest".  This is the default behavior if yo
 
 Use the [docker run](https://docs.docker.com/engine/reference/run/) command to run your image; the -p flag is used to map the host listening port to the container listening port.
 
- <pre>
-   $ docker run --name monolith-container -p 3000:3000 api
- </pre>
+<pre>
+$ docker run --name monolith-container -p 3000:3000 api
+</pre>
 
 
 To test the basic functionality of the monolith service, query the service using a utility like [cURL](https://localhost:3000/api/threads), which is bundled with Cloud9.
@@ -172,10 +172,9 @@ To test the basic functionality of the monolith service, query the service using
 Click on the plus sign next to your tabs and choose **New Terminal** or click **Window** -> **New Terminal** from the Cloud9 menu to open a new shell session to run the following curl command.
 
 <pre>
-  $ curl http://localhost:3000/api/users
+$ curl http://localhost:3000/api/users
 </pre>
 
-    <pre>
 You should see a JSON array with data about threads.
 
 Switch back to the original shell tab where you're running the monolith container to check the output from the monolith.
@@ -184,25 +183,24 @@ The monolith container runs in the foreground with stdout/stderr printing to the
 
 Here is sample output:
 
- <pre>
-   GET /api/users - 3
- </pre>
+<pre>
+GET /api/users - 3
+</pre>
 
 In the tab you have the running container, type **Ctrl-C** to stop the running container.  Notice, the container ran in the foreground with stdout/stderr printing to the console.  In a production environment, you would run your containers in the background and configure some logging destination.  We'll worry about logging later, but you can try running the container in the background using the -d flag.
 
 <pre>
-  $ docker run --name monolith-container -d -p 3000:3000 api
+$ docker run --name monolith-container -d -p 3000:3000 api
 </pre>
 
-    <pre>
 List running docker containers with the [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) command to make sure the monolith is running.
 
 <pre>
-  $ docker ps
+$ docker ps
 </pre>
 
 <pre>
-  $ docker logs <b><i>CONTAINER\_ID or CONTAINER_NAME</i></b>
+$ docker logs <b><i>CONTAINER_ID or CONTAINER_NAME</i></b>
 </pre>
 
 Here's sample output from the above command:  
@@ -227,9 +225,9 @@ Take a note of the repositoryUri from the output
     
 Retrieve the login command to use to authenticate your Docker client to your registry.
 
- <pre>
-   $(aws ecr get-login --no-include-email --region us-east-1)
- </pre>
+<pre>
+$(aws ecr get-login --no-include-email --region us-east-1)
+</pre>
 
 Tag and push your container image to the monolith repository.
 
@@ -255,8 +253,8 @@ latest: digest: sha256:2d27533d5292b7fdf7d0e8d41d5aadbcec3cb6749b5def8b8ea6be716
 
 View the latest image pushed and tagged in the ECR repository
 <pre>
-    aws ecr describe-images --repository-name api                           
-    {
+aws ecr describe-images --repository-name api                           
+{
     "imageDetails": [
         {
             "imageSizeInBytes": 22702204, 
@@ -269,7 +267,7 @@ View the latest image pushed and tagged in the ECR repository
             "imagePushedAt": 1557648496.0
         }
         ]
-    }
+}
 </pre>
 
 ### Checkpoint:
@@ -299,9 +297,9 @@ In this lab, you will create a task definition to serve as a foundation for depl
 1. Create an ECS Cluster which will host all services
 
     <pre>
-      aws ecs create-cluster \
-      --region us-east-1 \
-      --cluster-name "my_first_ecs_cluster"
+    aws ecs create-cluster \
+    --region us-east-1 \
+    --cluster-name "my_first_ecs_cluster"
     </pre>
 
 2. Create IAM roles for use with ECS
@@ -310,23 +308,24 @@ The 3 roles required are mentioned below
     
 * [AWSServiceRoleForECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using-service-linked-roles.html): This is an IAM role which authorizes ECS to manage resources on your account on your behalf, such as updating your load balancer with the details of where your containers are, so that traffic can reach your containers. Use the command below to check if this role exists
 
-    <pre>
-      aws iam get-role \
-      --role-name AWSServiceRoleForECS
-    </pre>
+<pre>
+aws iam get-role \
+--role-name AWSServiceRoleForECS
+</pre>
 
 If it doesn't exist, you can create it using the following command
 
 <pre>
-  aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
+aws iam create-service-linked-role \
+--aws-service-name ecs.amazonaws.com
 </pre>
 
 * [TaskRole](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_IAM_role.html?shortFooter=true): This is a role which is used by the ECS tasks. Tasks in Amazon ECS define the containers that should be deployed togehter and the resources they require from a compute/memory perspective. So, the policies below will define the IAM permissions that your docker containers will have. If you write any code for the service that interactes with different AWS service APIs, these roles would need to include those as allowed actions. Create this role using the command line below:
 
     Create a file with name <user_name>_iam-trust-relationship.json that contains:
     
-    <pre>
-	    {
+<pre>
+	{
 	    "Version": "2012-10-17",
 	    "Statement": [{
 		    "Effect": "Allow",
@@ -335,73 +334,73 @@ If it doesn't exist, you can create it using the following command
 		    },
 		    "Action": "sts:AssumeRole"
             }]
-        }
-    </pre>
+    }
+</pre>
     
-    Create the IAM role:
+Create the IAM role:
     
-    <pre>
-     aws iam create-role \
-     --role-name ECSTaskRole \
-     --assume-role-policy-document file://<b>user_name</b>_iam-trust-relationship.json
-    </pre>
+<pre>
+aws iam create-role \
+--role-name ECSTaskRole \
+--assume-role-policy-document file://<b>user_name</b>_iam-trust-relationship.json
+</pre>
     
-    Create the policy named <user_name>_ECSTaskRole-Policy.json
+Create the policy named <user_name>_ECSTaskRole-Policy.json
     
-    <pre>
-    		{
-           "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "ecs:DiscoverPollEndpoint",
-                        "ecs:PutAccountSettingDefault",
-                        "ecs:CreateCluster",
-                        "ecs:DeleteService",
-                        "ecs:DescribeTaskSets",
-                        "ecs:DeleteTaskSet",
-                        "ecs:DescribeTaskDefinition",
-                        "ecs:PutAccountSetting",
-                        "ecs:ListServices",
-                        "ecs:DeregisterTaskDefinition",
-                        "ecs:ListAccountSettings",
-                        "ecs:UpdateService",
-                        "ecs:CreateService",
-                        "ecs:DeleteAccountSetting",
-                        "ecs:ListTaskDefinitionFamilies",
-                        "ecs:RegisterTaskDefinition",
-                        "ecs:DescribeServices",
-                        "ecs:UpdateServicePrimaryTaskSet",
-                        "ecs:ListTaskDefinitions",
-                        "ecs:UpdateTaskSet",
-                        "ecs:CreateTaskSet",
-                        "ecs:ListClusters"
-                    ],
-                    "Resource": "*"
-                },
-                {
-                    "Effect": "Allow",
-                    "Action": "ecs:*",
-                    "Resource": [
-                        "arn:aws:ecs:*:*:task-definition/*:*",
-                        "arn:aws:ecs:*:*:task/*",
-                        "arn:aws:ecs:*:*:container-instance/*",
-                        "arn:aws:ecs:*:*:cluster/*"
+<pre>
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecs:DiscoverPollEndpoint",
+                "ecs:PutAccountSettingDefault",
+                "ecs:CreateCluster",
+                "ecs:DeleteService",
+                "ecs:DescribeTaskSets",
+                "ecs:DeleteTaskSet",
+                "ecs:DescribeTaskDefinition",
+                "ecs:PutAccountSetting",
+                "ecs:ListServices",
+                "ecs:DeregisterTaskDefinition",
+                "ecs:ListAccountSettings",
+                "ecs:UpdateService",
+                "ecs:CreateService",
+                "ecs:DeleteAccountSetting",
+                "ecs:ListTaskDefinitionFamilies",
+                "ecs:RegisterTaskDefinition",
+                "ecs:DescribeServices",
+                "ecs:UpdateServicePrimaryTaskSet",
+                "ecs:ListTaskDefinitions",
+                "ecs:UpdateTaskSet",
+                "ecs:CreateTaskSet",
+                "ecs:ListClusters"
+            ],
+                "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ecs:*",
+            "Resource": [
+                "arn:aws:ecs:*:*:task-definition/*:*",
+                "arn:aws:ecs:*:*:task/*",
+                "arn:aws:ecs:*:*:container-instance/*",
+                "arn:aws:ecs:*:*:cluster/*"
                     ]
-                }
-            ]
         }
-    </pre>
+    ]
+}
+</pre>
     
-    Attach the policy with the role:
+Attach the policy with the role:
     
-    <pre>
-    aws iam put-role-policy \
-    --role-name ECSTaskRole \
-    --policy-name ECSTaskRole_Policy \
-    --policy-document file://<b>user_name</b>_ECSTaskRole-policy.json
-    </pre>
+<pre>
+aws iam put-role-policy \
+--role-name ECSTaskRole \
+--policy-name ECSTaskRole_Policy \
+--policy-document file://<b>user_name</b>_ECSTaskRole-policy.json
+</pre>
     
 * [ECSTaskExecutionRole](https://docs.aws.amazon.com/AmazonECS/latest/userguide/task_execution_IAM_role.html): The Amazon ECS container agent makes calls to the Amazon ECS API on your behalf, so it requires an IAM policy and role for the service to know that the agent belongs to you. It is more convenient to create this role using the console as there is a managed policy for this role.
 
@@ -471,11 +470,11 @@ Create a log group with the same name in cloudwatch logs, else your tasks would 
 
 3. Register the task definition using the task definition json file we created above.
 
-    <pre>
-      aws ecs register-task-definition 
-      --region us-east-1 \
-      --cli-input-json file://fargate-task-def.json
-    </pre>
+<pre>
+aws ecs register-task-definition 
+--region us-east-1 \
+--cli-input-json file://fargate-task-def.json
+</pre>
 
 List task definitions using the below command
 
@@ -485,23 +484,23 @@ List task definitions using the below command
 
 4. Create a new Target Group
 
-   <pre>
-    aws elbv2 create-target-group \
-    --region us-east-1 \
-    --name monolith-cntr-tg \
-    --vpc-id <b>vpc-010b11d3ad023b4ed</b> \
-    --port 3000 \
-    --protocol HTTP \
-    --target-type ip \
-    --health-check-protocol HTTP \
-    --health-check-path / \
-    --health-check-interval-seconds 6 \
-    --health-check-timeout-seconds 5 \
-    --healthy-threshold-count 2 \
-    --unhealthy-threshold-count 2 \
-    --query "TargetGroups[0].TargetGroupArn" \
-    --output text
-   </pre>
+<pre>
+aws elbv2 create-target-group \
+--region us-east-1 \
+--name monolith-cntr-tg \
+--vpc-id <b>vpc-010b11d3ad023b4ed</b> \
+--port 3000 \
+--protocol HTTP \
+--target-type ip \
+--health-check-protocol HTTP \
+--health-check-path / \
+--health-check-interval-seconds 6 \
+--health-check-timeout-seconds 5 \
+--healthy-threshold-count 2 \
+--unhealthy-threshold-count 2 \
+--query "TargetGroups[0].TargetGroupArn" \
+--output text
+</pre>
 
 **Note:** Replace the vpc-id with your specific id. You should be able to get the VPCId for your specific account from the cfn-output.json file. The output of the above command will provide the TargetGroup ARN, make a note of it.
 
@@ -509,12 +508,12 @@ Now lets modify the listener to point the load balancer to this new target group
 
 Get the listener-arn 
 
- <pre>
- aws elbv2 describe-listeners \
- --region us-east-1 \
- --query "Listeners[0].ListenerArn" \
- --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
- --output text
+<pre>
+aws elbv2 describe-listeners \
+--region us-east-1 \
+--query "Listeners[0].ListenerArn" \
+--load-balancer-arn <b>arn:aws:elasticloadbalancing:us-east-1:012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+--output text
 </pre>
 
 Modify the listener
@@ -572,11 +571,11 @@ Create a file named ecs-service.json with the following parameters
 Create service using the command below
 
 <pre>
- aws ecs create-service \
- --region us-east-1 \
- --cluster my_first_ecs_cluster \
- --service-name monolith-service \
- --cli-input-json file://ecs-service.json
+aws ecs create-service \
+--region us-east-1 \
+--cluster my_first_ecs_cluster \
+--service-name monolith-service \
+--cli-input-json file://ecs-service.json
 </pre>
 
 
