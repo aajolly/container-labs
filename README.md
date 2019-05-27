@@ -62,7 +62,7 @@ On the left pane (Blue), any files downloaded to your environment will appear he
 In the bottom panel of your new Cloud9 IDE, you will see a terminal command line terminal open and ready to use.  Run the following git command in the terminal to clone the necessary code to complete this tutorial:
 
 <pre>
-$ git clone https://github.com/aajolly/container-immersion-day-15-05-2019.git
+$ git clone https://github.com/aajolly/container-labs.git
 </pre>
 
 After cloning the repository, you'll see that your project explorer now includes the files cloned.
@@ -70,7 +70,7 @@ After cloning the repository, you'll see that your project explorer now includes
 In the terminal, change directory to the subdirectory for this lab in the repo:
 
 <pre>
-$ cd container-immersion-day-15-05-2019/lab-1
+$ cd container-labs/lab-1
 </pre>
 
 5. Run some additional automated setup steps with the `setup` script:
