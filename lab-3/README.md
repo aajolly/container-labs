@@ -91,7 +91,7 @@ Since the services we deployed in previous labs use ECS as the deployment contro
         "taskDefinition": "threads-task-def:1", 
         "loadBalancers": [
             {
-                "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:776055576349:targetgroup/threads-tg/b61b2b03ecb4c757", 
+                "targetGroupArn": "<b>arn:aws:elasticloadbalancing:us-east-1:776055576349:targetgroup/threads-tg/b61b2b03ecb4c757</b>", 
                 "containerName": "threads-cntr", 
                 "containerPort": 3000
             }
@@ -156,10 +156,10 @@ These will be referenced in the deployment-group you'd create for CodeDeploy.
     <pre>
     aws elbv2 create-listener \
     --region us-east-1 \
-    --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0 \
+    --load-balancer-arn <b>arn:aws:elasticloadbalancing:us-east-1:012345678912:loadbalancer/app/alb-container-labs/86a05a2486126aa0</b> \
     --port 8080 \
     --protocol HTTP \
-    --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/threads-tg-2/b0ce12f4f6957bb7 \
+    --default-actions Type=forward,TargetGroupArn=<b>arn:aws:elasticloadbalancing:us-east-1:012345678912:targetgroup/threads-tg-2/b0ce12f4f6957bb7</b> \
     --query "Listener[0].Listener.Arn" \
     --output text
     </pre>
@@ -241,12 +241,12 @@ These will be referenced in the deployment-group you'd create for CodeDeploy.
                     ], 
                     "prodTrafficRoute": {
                         "listenerArns": [
-                            "<b>arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218</b>"
+                            "<b>arn:aws:elasticloadbalancing:us-east-1:012345678912:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218</b>"
                         ]
                     }, 
                     "testTrafficRoute": {
                         "listenerArns": [
-                            "<b>arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:listener/app/alb-container-labs/86a05a2486126aa0/d3336ca308561265</b>"
+                            "<b>arn:aws:elasticloadbalancing:us-east-1:012345678912:listener/app/alb-container-labs/86a05a2486126aa0/d3336ca308561265</b>"
                         ]
                     }
                 }
