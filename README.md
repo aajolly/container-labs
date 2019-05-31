@@ -17,7 +17,7 @@ In this lab, you'll deploy a basic nodejs monolithic application using Auto Scal
 * **Lab 1:** [Containerize the monolith](#lab-1---containerize-the-monolith)
 * **Lab 2:** [Deploy the container using AWS Fargate](#lab-2---deploy-your-container-using-ecrecs)
 * **Lab 3:** [Break the monolith into microservices](#lab-3---break-the-monolith-into-microservices)
-* **Lab 4:** [CodeDeploy Blue/Green deployments](#lab-4-codedeploy-bluegreen-deployments)
+* **Lab 4:** [CodeDeploy Blue/Green deployments](lab-3/README.md)
 * **Cleanup** [Put everything away nicely](#lab-cleanup)
 
 
