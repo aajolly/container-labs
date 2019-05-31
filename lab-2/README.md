@@ -1,4 +1,4 @@
-## From Monolith To Microservices
+## Lab-2: From Monolith To Microservices
 
 In this lab we take our monolithic application deployed on ECS and split it up into microservices.
 
@@ -18,11 +18,11 @@ __Development velocity__: Microservices can enable a team to build faster by low
 
 __Define microservice boundaries:__ Defining the boundaries for services is specific to your application's design, but for this REST API one fairly clear approach to breaking it up is to make one service for each of the top level classes of objects that the API serves:
 
-```
+<pre>
 /api/users/* -> A service for all user related REST paths
 /api/posts/* -> A service for all post related REST paths
 /api/threads/* -> A service for all thread related REST paths
-```
+</pre>
 
 So each service will only serve one particular class of REST object, and nothing else. This will give us some significant advantages in our ability to independently monitor and independently scale each service.
 
@@ -140,7 +140,7 @@ Once we have verified this new microservice works we can remove the old code pat
    aws elbv2 describe-listeners \
    --region us-east-1 \
    --query "Listeners[0].ListenerArn" \
-   --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+   --load-balancer-arn <b>arn:aws:elasticloadbalancing:us-east-1:012345678912:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218</b> \
    --output text
    </pre>
 
@@ -152,7 +152,7 @@ Once we have verified this new microservice works we can remove the old code pat
    --listener-arn <b>arn:aws:elasticloadbalancing:us-east-1:776055576349:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218</b> \
    --priority 1 \
    --conditions Field=path-pattern,Values='/api/<b>SERVICE_NAME</b>*' \
-   --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/<b>SERVICE_NAME</b>-tg/73e2d6bc24d8a067
+   --actions Type=forward,TargetGroupArn=<b>arn:aws:elasticloadbalancing:us-east-1:012345678912:targetgroup/SERVICE_NAME-tg/73e2d6bc24d8a067</b>
    </pre>
 
 10. Create a new service using the json input file for each service. File name - ecs-service-**SERVICE_NAME**.json
@@ -164,7 +164,7 @@ Once we have verified this new microservice works we can remove the old code pat
       "taskDefinition": "<b>SERVICE_NAME</b>-task-def:1", 
       "loadBalancers": [
          {
-               "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/<b>SERVICE_NAME</b>-tg/566b90ffcc10985e", 
+               "targetGroupArn": "<b>arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/SERVICE_NAME-tg/566b90ffcc10985e</b>", 
                "containerName": "<b>SERVICE_NAME</b>-cntr", 
                "containerPort": 3000
          }

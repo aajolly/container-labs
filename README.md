@@ -15,9 +15,11 @@ In this lab, you'll deploy a basic nodejs monolithic application using Auto Scal
 
 * **Lab Setup:** [Setup working environment on AWS](#lets-begin)
 * **Lab 1:** [Containerize the monolith](#lab-1---containerize-the-monolith)
-* **Lab 2:** [Deploy the container using AWS Fargate](#lab-2---deploy-your-container-using-ecrecs)
-* **Lab 3:** [Break the monolith into microservices](#lab-3---break-the-monolith-into-microservices)
-* **Lab 4:** [CodeDeploy Blue/Green deployments](lab-3/README.md)
+* **Lab 1a:** [Deploy the container using AWS Fargate](#lab-2---deploy-your-container-using-ecrecs)
+* **Lab 2:** [Break the monolith into microservices](#lab-3---break-the-monolith-into-microservices)
+* **Lab 3:** [CodeDeploy Blue/Green deployments](lab-3/README.md)
+* **Lab 4:** [Service Discovery](lab-4/README.md)
+* **Lab 5:** [AppMesh](lab-5/README.md)
 * **Cleanup** [Put everything away nicely](#lab-cleanup)
 
 
@@ -512,7 +514,7 @@ Get the listener-arn
 aws elbv2 describe-listeners \
 --region us-east-1 \
 --query "Listeners[0].ListenerArn" \
---load-balancer-arn <b>arn:aws:elasticloadbalancing:us-east-1:012345678912</b>:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+--load-balancer-arn <b>arn:aws:elasticloadbalancing:us-east-1:012345678912:loadbalancer/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218</b> \
 --output text
 </pre>
 
@@ -521,9 +523,9 @@ Modify the listener
 <pre>
 aws elbv2 modify-listener \
 --region us-east-1 \
---listener-arn arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218 \
+--listener-arn <b>arn:aws:elasticloadbalancing:us-east-1:012345678912:listener/app/alb-container-labs/86a05a2486126aa0/0e0cffc93cec3218</b> \
 --query "Listeners[0].ListenerArn" \
---default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/monolith-cntr-tg/566b90ffcc10985e \
+--default-actions Type=forward,TargetGroupArn=<b>arn:aws:elasticloadbalancing:us-east-1:012345678912:targetgroup/monolith-cntr-tg/566b90ffcc10985e</b> \
 --output text
 </pre>
 
@@ -541,7 +543,7 @@ Create a file named ecs-service.json with the following parameters
         "taskDefinition": "monolith-task-def:1", 
         "loadBalancers": [
             {
-                "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:<b>012345678912</b>:targetgroup/monolith-cntr-tg/566b90ffcc10985e", 
+                "targetGroupArn": "<b>arn:aws:elasticloadbalancing:us-east-1:012345678912:targetgroup/monolith-cntr-tg/566b90ffcc10985e</b>", 
                 "containerName": "monolith-cntr", 
                 "containerPort": 3000
             }
@@ -598,7 +600,7 @@ Nice work!  You've created a task definition and are able to deploy the monolith
 
 [*^ back to the top*](#monolith-to-microservices-with-docker-and-aws-fargate)
 
-## Lab 3 - Break the monolith into microservices
+## Lab 2 - Break the monolith into microservices
 
 Take this lab as a challange where you break this monolith into microservices. Below is a quick reference architecture for microservices on ECS.
 ![Reference architecture of microservices on ECS](/images/microservice-containers.png)

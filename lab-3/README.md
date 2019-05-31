@@ -1,5 +1,5 @@
 
-## Lab 4: CodeDeploy Blue/Green deployments
+## Lab 3: CodeDeploy Blue/Green deployments
 
 In AWS CodeDeploy, blue/green deployments help you minimize downtime during application updates. They allow you to launch a new version of your application alongside the old version and test the new version before you reroute traffic to it. You can also monitor the deployment process and, if there is an issue, quickly roll back.
 
@@ -112,7 +112,7 @@ Since the services we deployed in previous labs use ECS as the deployment contro
             }
         }, 
         "deploymentController": {
-            "type": "<b>CODE_DEPLOY</b>"
+            "type": "CODE_DEPLOY"
         }
     }
     </pre>
