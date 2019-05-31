@@ -9,6 +9,7 @@ In this lab, you'll deploy a basic nodejs monolithic application using Auto Scal
 
 * AWS account - if you don't have one, it's easy and free to [create one](https://aws.amazon.com/).
 * AWS IAM account with elevated privileges allowing you to interact with CloudFormation, IAM, EC2, ECS, ECR, ALB, VPC, CodeDeploy, CloudWatch, Cloud9. [Learn how](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html).
+* Anything in **bold** is a placeholder and must be replaced using your environment specific contsruct.
 * Familiarity with [Docker](https://www.docker.com/), and [AWS](httpts://aws.amazon.com) - *not required but a bonus*.
 
 ### What you'll do:
@@ -277,7 +278,7 @@ At this point, you should have a working container for the monolith codebase sto
 
 [*^ back to the top*](#monolith-to-microservices-with-docker-and-aws-fargate)
 
-## Lab 2 - Deploy your container using ECR/ECS
+## Lab 1a - Deploy your container using ECR/ECS
 
 Deploying individual containers is not difficult.  However, when you need to coordinate many container deployments, a container management tool like ECS can greatly simplify the task.
 
